@@ -1,0 +1,35 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{Games}
+
+\RequirePackage{varwidth}
+\RequirePackage{array}
+\RequirePackage{Commands}
+
+% http://tex.stackexchange.com/a/84076
+% \game[flushleft]{game contents} to align to left
+\newcommand\game[2][center]{%
+  \begin{#1}
+    \par\noindent\fbox{
+      \begin{varwidth}{\dimexpr\textwidth-2\fboxsep\relax}
+        \begin{math}
+          % step between columns
+          \setlength\arraycolsep{10pt}
+          #2
+        \end{math}
+      \end{varwidth}
+    }\par
+  \end{#1}
+}
+
+% underline the title of the game
+\newcommand*{\Title}[1]{\underline{#1{:}}}
+% #2 is the game/oracle/algorithm name ie PRF-Real, Encrypt
+\renewcommand*{\Game}[1]{\textbf{\textsf{Game}}\ \textsf{#1}}
+% #1 is the oracle name. #2 is for the params
+\newcommand*{\Oracle}[2]{\textbf{\textsf{Oracle}}\ \textbf{#1}{#2}}
+% #1 is the algorithm name (default=Algorithm). #2 is for the params
+\newcommand*{\Algorithm}[2][Algorithm]{\textbf{\textsf{#1}}\ \textsf{#2}}
+% typeset Return
+\newcommand*{\RetVal}[1]{\textsf{Return }{#1}}
+
+\endinput

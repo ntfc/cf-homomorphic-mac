@@ -1,0 +1,345 @@
+\chapter{Delegation of computations}\label{chap:delegation}
+Currently, if Alice wants do delegate a program $f$ to an external server (as
+in ``cloud computing'') she has to store all the data unencrypted on the
+external server, and then the server can perform the computation and send the
+result back to Alice. If the server is not trusted there is no way that Alice
+can verify that the output she received is indeed correct, or as importantly
+than this, Alice's privacy is not enforced since the external server has full
+access to her data.
+A very recent scandal showed that governmental agencies may have included
+backdoors in many famous cloud services that would allow them to easily have
+access to the users outsourced data\footnotemark.
+\footnotetext{See
+  \url{http://www.theguardian.com/world/2013/jun/06/nsa-phone-records-verizon-court-order}
+  or \url{http://www.theguardian.com/us-news/the-nsa-files}.}
+
+In a perfect world where it is possible for Alice to delegate any computation
+$f$ over a data set of arbitrary size, she just sends the encrypted data to an
+external server, along with a description of the computation $f$, and then the
+server executes $f$ over the encrypted data and returns to Alice the encrypted
+result of $f$. Afterwards, she can obtain the unencrypted result using her
+secret key.  This technique would enforce the \emph{privacy} of the outsourced
+data set, but this would not give Alice the possibility of verifying the
+correctness of results. To do so, the server would also be able to send to
+Alice some small proof that she could verify very easily, and therefore there
+would a guarantee of \emph{authenticity}.
+
+Unfortunately, there are not yet any practical solutions to achieve this
+``perfect'' scenario. And in the current world, there is no privacy nor any way
+to easily verify that the output is correct.
+There
+were however many advances and new techniques introduced in the last few years
+in order to improve this, and we will briefly introduce some of them.
+ 
+\section{Homomorphic encryption}
+Homomorphic encryption is known to exist for a long time
+\cite{rivest:adleman:dertouzos:1978}. One of the first realizations was that
+RSA \cite{RSA:1978} was partially homomorphic: given two messages $m_1, m_2$
+and their corresponding encryptions with RSA, $c_1 = \Enc(m_1), c_2
+= \Enc(m_2)$, it holds that $c_1 \cdot c_2 = \Enc(m_1 \cdot m_2)$, i.e., the
+product of two ciphertexts is the same as the encryption of the product of two
+messages.
+
+Other popular partially homomorphic schemes include
+\textcitescheme{ElGamal:1985}, \textcitescheme{Paillier:1999} and
+\textcitescheme{Boneh:2005}. Initially, \citescheme{ElGamal:1985} was known to
+be only partially multiplicatively homomorphic, but later an additively
+homomorphic variant was proposed \cite{CramerGennaroSchoen:1997}.
+\citescheme{Paillier:1999} is both additively and multiplicatively homomorphic.
+\citescheme{Boneh:2005} has the interesting property that allows it to perform
+multiple additions over ciphertexts, and one final multiplication.  A very
+useful practical use for such partially homomorphic encryption schemes is
+electronic voting (e-voting) \cite{Helios:2008}
+\footnote{\url{https://vote.heliosvoting.org/}}.
+%\todo{e-cash, leiloes,private information retrival
+%http://www.cs.rit.edu/~arl9577/crypto/alange-presentation.pdf}
+
+However, these partially homomorphic encryption schemes only support additions
+and multiplications, so Alice cannot yet delegate the computation of some
+arbitrary program $f$. This was actually an open problem until very recently
+when \textcite{gentry:2009:FHE} presented the first realization of a Fully
+Homomorphic Encryption (FHE) scheme that allows for an unlimited number of
+computations over encrypted data, just like we have in our perfect world. But
+as we are not in this perfect world, FHE is still very far from being
+practical, even tough many improvements to \citeauthor{gentry:2009:FHE}'s
+original work have been proposed in the last few years.
+
+A FHE scheme is a public-key encryption scheme, and so it is composed of the
+usual \KeyGen, \Enc and \Dec algorithms. The message and ciphertext spaces of
+the scheme are $\calM$ and $\calC$ respectively.  A ciphertext $c \in \calC$
+encrypts a message $m \in \calM$ under key (\pk, \sk), and $\Dec(\sk, c)$
+returns $m$.
+
+The extra feature of a FHE scheme is that it comes equipped with an extra
+\emph{efficient} algorithm \emph{Evaluate}, denoted as \Eval. Basically, for
+every valid key pair (\pk, \sk), any $n$ encryptions $\setSpace{c}{1}{n} \in
+\calC$ of any messages $\setSpace{m}{1}{n} \in \calM$ under (\pk, \sk), and for
+any $n$-ary function $\function{f}{\calM^n}{\calM}$, $\Eval(\pk, f,
+\setSpace{c}{1}{n})$ outputs a ciphertext $c$ that encrypts
+$f(\setSpace{m}{1}{n})$, i.e., outputs the result of $\Enc(\pk,
+f(\setSpace{m}{1}{n}))$ without access to $\setSpace{m}{1}{n}$.
+Essentially, \Eval is a public algorithm that anyone can execute without the
+secret key, and it works like an ``impenetrable box'' of encryption that
+executes $f$ inside itself.
+
+The following commutative diagram describes a FHE scheme.
+\begin{center}
+  \begin{tikzcd}
+    % top left-right arrow
+    \calC^n %
+      \arrow  {r}{\Eval(\pk, f, \cdot, \dotsc, \cdot)}
+      % left top-bottom arow
+      \arrow[swap]{d}{\Dec(\sk, \cdot, \dotsc, \cdot)} %
+    &[5em] \calC %
+      % right top-bottom arrow
+      \arrow{d}{\Dec(\sk, \cdot)} %
+    \\[1.75em]
+    % bottom left-righ arrow
+    \calM^n %
+      \arrow{r}{f(\cdot, \dotsc, \cdot)} %
+    &
+    \calM
+  \end{tikzcd}
+\end{center}
+
+As we can see, decryption and application of $f$ is exactly the same as
+\Eval and decryption: either way, the end result is $f(\setSpace{m}{1}{n}$).
+
+With such a FHE scheme, Alice can now execute programs on her encrypted data
+saved on an external server. She simply sends the description of $f$, and the
+server simply sends her the output of $\Eval$. More over, she can also encrypt
+the description of the program $f$ so that the external doesn't know which
+program she is executing nor over which data in particular. The practical
+applications of such a scheme are enormous: we can send an encrypted query to
+a search engine, and received the encrypted results; or we can securely store
+a huge data set, and then compute a complex function over it and obtain an
+encrypted result. But unfortunately, there isn't yet any practical FHE scheme
+
+Current FHE constructions are all built around the same idea: when encrypting
+a message, some noise is added to the resulting ciphertext, so that the
+ciphertexts become ``noisy'', and computing over them increases the noise, so
+that eventually it becomes too big that decryption is impossible. To overtake
+this problem, \citeauthor{gentry:2009:FHE} introduced the notion of
+\emph{bootstrapping} so that it is possible to ``refresh'' the ciphertexts in
+such a way that they can used for an unbounded number of computations. But this
+is also the main bottleneck of current constructions of
+FHE.
+
+In practical terms, a Homomorphic Encryption Library
+(HELib\footnote{\url{https://github.com/shaih/HElib}}) was recently released
+with the purpose of making homomorphic encryption a reality. Unfortunately, and
+because of the complexity of bootstrapping, only low-level operations are
+supported.
+
+\section{Homomorphic authentication}
+In the current (non-homomorphic) cryptographic protocols, in order to enforce
+the authenticity of a message, i.e., to prove that it wasn't tampered or forged
+in some way, we need to rely on authentication schemes such as Signatures or
+Message Authentication Codes (MACs).
+It would only be natural to have equivalent schemes on a homomorphic scenario,
+so that when Alice uses a homomorphic encryption scheme, she would receive from
+the server both the output of the computation as well as some small proof that
+she can use to verify the authenticity of the obtained output.  As in
+a non-homomorphic scenario, there are two homomorphic authentication primitives
+-- Signatures and MACs.
+
+These authentication primitives must be both \emph{secure} and
+\emph{efficient}, meaning that they should be able to prove the correctness of
+the delegated computation, and the verification should be far less complex than
+the delegation and computation, i.e., in terms of communication and
+computation. But what makes these primitives non-trivial is that the client
+does not keep a local copy of her data, so it rules out trivial solutions such
+as one where the client performs the computation herself, and then compares the
+output with the one obtained from the server. Another nice property that
+homomorphic authenticators should enjoy is \emph{composability}, which means
+that derived signatures should be usable as inputs for future computations.
+
+\paragraph*{Homomorphic Signatures}
+The idea of a \emph{homomorphic signature} was first introduced in a series of
+talks by \textcite{rivest:micali:chari:rabin:2001}, and then formally defined
+by \textcite{johnson:molnar:song:wagner:2002}. A homomorphic signature scheme
+allows us to perform computations over signed data, and, besides the regular
+signature algorithms \KeyGen, \Sign and \Vrfy, it is augmented with an
+\emph{evaluation} algorithm \Eval that performs the homomorphic computation
+over the signed data, and then returns a short signature.  Basically, if Alice
+has a data set $\setSpace{m}{1}{n}$ of size $n$, she must first independently
+sign each message $m_i$ with her private signing key to obtain $n$ independent
+signatures $\setSpace{\sigma}{1}{n}$, and then she stores both the data set and
+the $n$ signatures on some external server. Later, anyone can ask the server to
+compute a signature $\sigma'$ that is valid for $m' = f(\setSpace{m}{1}{n})$,
+without ever revealing the original data set, and anyone with access to the
+public verification key can verify that the server correctly applied $f$ to the
+data set by verifying the signature $\sigma'$.  This derived signature
+authenticates both the function $f$ and the result of applying $f$ to the data
+set.
+
+Informally, the security property of a homomorphic signature states that
+adversaries that can (adaptively) see the signatures corresponding to
+polynomially many messages of their choice, cannot forge a signature for a new
+$m^\star \neq f(\setSpace{m}{1}{n})$.
+
+The first constructions supported only the computation of linear functions over
+signed data, and were specially tailored for network coding routing mechanism.
+The only non-linear construction is the one of \textcite{boneh:freeman:2011}
+with support for polynomial functions.  The security of
+\citescheme{boneh:freeman:2011} is based on hard problems on ideal lattices,
+and it is performed in the random oracle model.
+
+\paragraph*{Homomorphic MACs}
+In the private key setting we have \emph{homomorphic MACs}, which do not have
+the property of public verifiability, since only the holders of the private key
+can perform the verification. The notion was introduced by
+\textcite{gennaro:wichs:2012}. With a homomorphic MAC scheme, anyone who holds
+the public evaluation key and doesn't know the secret key can compute a short
+MAC that validates some computation over previously authenticated data.  The
+owner of the secret key can then verify the results of the computation with
+ever knowing the original authenticated inputs. Just as with homomorphic
+encryption and signatures, a homomorphic MAC scheme is a regular
+non-homomorphic MAC scheme augmented with an \emph{evaluation} algorithm \Eval
+to perform the homomorphic computation over the authenticated data set.
+
+Basically, Alice has a secret key that she uses to authenticate a message
+$m$ to obtain a MAC $\sigma$. Later, given MACs $\setSpace{\sigma}{1}{n}$
+authenticating messages $\setSpace{m}{1}{n}$, anyone can run a program $f$ over
+$\setSpace{\sigma}{1}{n}$ to generate a short MAC that authenticates the output
+of $f$ over the original messages $\setSpace{m}{1}{n}$, and only the holders of
+the secret key can verify the results of such MAC.
+
+\citeauthor{gennaro:wichs:2012} also presented a construction with support for
+arbitrary computations, a Fully Homomorphic MAC, but its security is based on
+a weaker model where an adversary cannot ask for verification queries, but only
+for authentication queries. Having that limitation in mind,
+\textcite{catalano:fiore:2013} presented a simple construction, whose security
+is based on a stronger model where an adversary can ask for multiple
+verification queries. For their construction to be simple and efficient, they
+had to reduce the range of accepted computations.
+
+The main drawback of the \citescheme{catalano:fiore:2013} construction, besides
+the limited range of computations supported, is that the verification algorithm
+runs in time proportional to the size of the function. To overcome this
+problem, a construction with efficient (amortized) verification based on
+\citescheme{catalano:fiore:2013} was proposed by
+\textcite{backes:fiore:reischuk:2013}. The security of their construction is
+also based on a stronger model, but in order to achieve faster verification
+times, they introduced an efficient PRF that allows their construction to
+verify efficiently in an amortized sense.
+
+\section{Succinct Non-Interactive Arguments of Knowledge}
+It would be possible to construct fully homomorphic signatures by using
+succinct non-interactive arguments of knowledge (SNARKs)
+\cite{cryptoeprint:2011:443}. Informally, this primitive allows us to create
+a succinct argument $\pi$ for any \SansSerif{NP} statement, to prove knowledge
+of the corresponding witness.  The length of $\pi$ is independent of the
+statement/witness size, and the complexity of verifying $\pi$ only depends on
+the size of the statement.
+
+Basically, using SNARKs, the output $y$ of a program $f$ can be authenticated
+by creating a short argument $\pi$ that proves the knowledge of ``the input
+data $D$ along with valid signatures authenticating $D$, such that $f(D)
+= y$''. Because this is an argument of knowledge, if we were able to forge
+a signature for the output of some program $f$, we would be able to extract
+a forged signature for the input data $D$, and therefore break the security of
+signatures.
+
+The main drawback of SNARKs is that they are not efficient in practice, and
+the current constructions rely on the random oracle model or other
+non-standard, non-falsifiable assumptions.
+
+\section{Verifiable Computation}
+Verifiable computation (\nom{VC}{Verifiable Computation}) allows a client with
+much smaller computational power to outsource a computationally (heavy) task to
+a remote server while being able to verify the result in a very efficient way.
+A client sends to the server both the function $f$ and its input $x$, and the
+server returns $y = f(x)$ as well as a proof that the function was correctly
+computed over the input $x$. The verification of the proof should be require
+substantially less computational effort than executing $f$.
+
+In the most commonly used definition of VC proposed by
+\textcite{eprint:2009:547}, a VC scheme is commonly composed of four
+algorithms: \KeyGen, \SansSerif{ProbGen}, \SansSerif{Compute} and
+\SansSerif{Verify}. The program $f$ is a parameter of \KeyGen, so it outputs
+a key pair which depends on $f$.  The problem generation algorithm
+\SansSerif{ProbGen} is executed by the client and encodes the input $x$ of $f$
+as a public value $\sigma_x$, which is given to \SansSerif{Compute}, and as
+private value used for \SansSerif{Verify}.  Given the public encoding
+$\sigma_x$, \SansSerif{Compute} returns an encoding of the output of $f(x)$. To
+\SansSerif{Verify}, we simply need the encoding output of $f(x)$ and the
+private value of \SansSerif{ProbGen}, and then either \SansSerif{false} or the
+actual output of the function is returned. Such a scheme must be correct,
+secure and efficient.
+
+The correctness property of a VC scheme states that a VC scheme is correct if
+\SansSerif{ProbGen} produces values that allows an honest server to compute
+values that will verify successfully and corresponding to the evaluation of $f$
+on those inputs.
+
+Intuitively, a VC scheme is secure if a malicious server cannot trick the
+verification algorithm to accept an incorrect output. Particularly, for a given
+function $f$ and input $x$, a malicious server should not be able to convince
+\SansSerif{Verify} to output $y'$ such that $f(x) \neq y'$.
+
+Finally, to be efficient means that the time to encode the input and to verify
+the output must be smaller than the time to compute $f$.
+
+As we can see, VC is very similar to homomorphic schemes. In the case
+that we are more interested, homomorphic authentication, the server only knows
+$f$ and the output of $f$, while in VC, the server knows $f$, the input and
+output $f$. It is actually possible to build a VC scheme with homomorphic
+signatures or MACs.
+
+\textcite{parno:howell:gentry:raykova:2013} presented a practical VC scheme
+(\citetool{parno:howell:gentry:raykova:2013}), along with an implementation,
+where a client can efficiently verify the correctness of an outsourced
+computation. The verification times are in the orders of 10ms and the proof's
+size is only 288 bytes, with 128 bits of security.
+
+One other work is the one by \textcite{tinyram} which also includes an
+implementation: \citetool{tinyram}, a random-access machine tailored for
+efficient verification of non-deterministic computations. The verification times
+are in the orders of 5ms and the proof size is also 288 bytes, with 128 bits of
+security. The main improvement of \citetool{tinyram} over
+\citetool{parno:howell:gentry:raykova:2013} is regarding the
+\SansSerif{Compute} algorithm, which they improve about 5.3 times.
+
+\section{Representation of programs}
+A natural question we have not addressed until now is how can we represent the
+programs so that both the client and the server can act on them? The common way
+of doing it is to first convert the original program (in some high level
+language) to a circuit representation, and then use that as the program
+description. 
+
+A circuit can be either boolean -- only boolean operations such as $\AND$ or
+$\OR$ allowed -- or arithmetic -- only arithmetic operations such as $+$ or
+$\times$. Since a circuit is a directed acyclic graph, these operations are
+contained within the internal nodes of the graph, while the inputs of the
+program are nodes with in-degree 0. And obviously the function's output is the
+node or set of nodes with out-degree 0.
+
+For some cryptographic protocols, specially in the VC setting where fast
+verification is a must, the notion of circuits is usually extended with some
+specific gates. Sometimes it is useful to add a split gate which is very fast
+to verify, but for the purpose of our work we will only deal with arithmetic
+circuits expressed by $+$ and $\times$ gates because we are not interested in
+achieving efficient verification, but rather efficient computations.
+
+For our work, we decided to use \citetool{parno:howell:gentry:raykova:2013}'s
+\cite{parno:howell:gentry:raykova:2013} toolchain to convert a piece of
+\texttt{C} code into an appropriate circuit representation. Even though
+\citetool{parno:howell:gentry:raykova:2013}'s focus is on a VC scheme with
+support for general computations, it also contains a ``\texttt{C} to circuit''
+converter. More specially, it is able to convert a substantial subset of
+\texttt{C} instructions into both boolean and arithmetic circuits.
+
+%TODO: isto ja esta no proximo capitulo
+%Since for this work we will only deal with a restricted class of computations,
+%namely those who can be represented as polynomials, we can use
+%\citetool{parno:howell:gentry:raykova:2013} to generate a corresponding
+%arithmetic circuit. But \citetool{parno:howell:gentry:raykova:2013}'s
+%arithmetic circuits come equipped with an extra gate operation that is not
+%supported by the current homomorphic MAC schemes, which means that we cannot
+%take advantage of the full set of supported \texttt{C} instructions of
+%\citetool{parno:howell:gentry:raykova:2013}. 
+
+In the next chapter we define more precisely both types of circuits, and we
+also show how we used \citetool{parno:howell:gentry:raykova:2013} for our
+circuit generation.

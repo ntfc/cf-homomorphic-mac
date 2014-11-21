@@ -1,0 +1,65 @@
+\chapter{Homomorphic Authenticators}\label{chap:homo-auth}
+
+A trivial solution to the problem of enforcing authenticity of outsourced
+computations would be to make the server send the entire data and the computed
+signatures/MACs (we will refer to both of them as tags from now on) back to the
+client, and then she would compute the function herself and compare the
+results. But by using homomorphic authentication primitives, and by sending
+only the tags and the output of the function back to the client, beyond saving
+bandwidth, the amount of information revealed to the client about the data set
+is much smaller. Also, this trivial solution does not guarantee efficiency
+which is one of the requirements to enforce the authenticity of computations.
+
+% Remove this paragraph if using the Definitions section
+Let us now introduce some basic notions and definitions necessary to build
+homomorphic authentication schemes, as well as some constructions. From now on,
+it is always assumed that Alice stores the data and tags on some possibly
+untrusted server.
+
+\input{Chapters/_homo-sigs}
+\input{Chapters/_homo-macs}
+
+%% ---------------------------------------------------------------------------
+% LIMITATIONS AND OPEN PROBLEMS
+%% ---------------------------------------------------------------------------
+\section{Limitations and open problems}\label{sec:limitations}
+Homomorphic signatures are still far from being a truly practical primitive.
+The data set size has to be fixed a-priori, and besides the
+\citescheme{boneh:freeman:2011} scheme with support for polynomials of bounded
+degree, only linear realizations have been proposed. However, for quadratic and
+higher degree polynomials, the derived signatures leak information about the
+original data set. This privacy property is only achieved for linear functions,
+and therefore, it remains an open problem to extend it for quadratic and higher
+polynomials.
+
+The security of \citescheme{boneh:freeman:2011} scheme could be strengthened by
+removing the random oracle model which is used to simulate signatures on
+a chosen message attacker, but it is not known if that's even possible without
+losing the homomorphic properties.
+
+In the private key setting, the existence of a fully homomorphic MAC scheme is
+already known as it was shown by \textcite{gennaro:wichs:2012}. However, its
+security model does not allow an adversary to ask for verification queries, and
+it would be interesting to improve the \citescheme{gennaro:wichs:2012} scheme
+to support an unbounded number of verification queries. Just as with
+the \citescheme{catalano:fiore:2013} constructions, the complexity of the
+verification algorithm of a fully homomorphic MAC is not independent of the
+complexity of a program $\calP$. This, and the fact that it relies on FHE
+``machinery'', makes the \citescheme{gennaro:wichs:2012} scheme not practical.
+
+The~\citescheme{catalano:fiore:2013}
+and~\citescheme{backes:fiore:reischuk:2013} schemes only support a limited
+class of functions. Even though they allow the computation of many interesting
+functions, and because of their superior efficiency compared to fully
+homomorphic MACs, it would be very interesting to extend them to a broader
+class of functions, i.e., to construct a fully homomorphic MAC for circuits of
+arbitrary size. 
+
+Another interesting open problem is the existence of a \emph{Fully Homomorphic
+Signature} scheme which could authenticate the computation of any function on
+signed data. This scheme would be particularly useful to be used alongside
+a FHE scheme like the one from \textcite{gentry:2009:FHE}. It is also not clear
+whether processes from~\citeauthor{gentry:2009:FHE}'s construction could be
+applied to signature schemes in order to improve their security and efficiency.
+While that is not possible, it would be useful to enlarge the set of admissible
+functions of homomorphic signatures schemes.

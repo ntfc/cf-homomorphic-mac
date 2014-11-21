@@ -1,0 +1,12 @@
+\begin{algorithm}
+  \begin{algorithmic}[1]
+    \Function{Topo-Sort}{$G$}
+      \State \Call{DFS}{$G$}\Comment{To compute the finishing times $u.f$ for
+      each vertex of $G$}
+      \State Output a list $L$ in order of decreasing finishing times
+    \EndFunction
+  \end{algorithmic}
+  \caption{A simple topological sorting algorithm, using DFS as in
+    algorithm~\ref{alg:dfs}.}
+  \label{alg:tsort}
+\end{algorithm}

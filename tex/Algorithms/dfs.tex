@@ -1,0 +1,32 @@
+\begin{algorithm}
+  \begin{algorithmic}[1]
+    \Function{DFS}{G}\Comment{Acyclic graph $G = (V,E)$}
+      \For{each vertex $u \in V$}
+        \State $u.color \gets$ WHITE
+      \EndFor
+      \State $time \gets 0$\Comment{Global variable to keep track of time}
+      \For{each vertex $u \in V$}
+        \If{$u.color$ == WHITE}
+          \State \Call{DFS-Visit}{$G$, $u$}
+        \EndIf
+      \EndFor
+    \EndFunction
+    \Statex
+    \Function{DFS-Visit}{$G,u$}
+      \State $time \gets time + 1$
+      \State $u.d \gets time$\Comment{Time at which white vertex $u$ was discovered}
+      \State $u.color \gets$ GRAY
+      \For{each vertex $v \in G.Adj[u]$}
+        \If{$v.color$ == WHITE}
+          \State \Call{DFS-Visit}{$G, v$}
+        \EndIf
+      \EndFor
+      \State $u.color \gets$ BLACK\Comment{Vertex $u$ is finished}
+      \State $time \gets time + 1$
+      \State $u.f \gets time$\Comment{Time at which black vertex $u$ was
+        finished}
+    \EndFunction
+  \end{algorithmic}
+  \caption{Basic DFS.}
+  \label{alg:dfs}
+\end{algorithm}

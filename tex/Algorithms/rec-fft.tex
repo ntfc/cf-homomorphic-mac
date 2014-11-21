@@ -1,0 +1,24 @@
+\begin{algorithm}
+  \begin{algorithmic}[1]
+    \Function{Recursive-FFT}{a}
+      \State $n \gets a.length$
+      \If{n == 1}
+        \State \Return a
+      \EndIf
+      \State $\omega_n \gets e^{2 \pi \rfrac{j}{n}}$
+      \State $\omega \gets 1$
+      \State $a^{(0)} \gets (a_0, a_2, \dotsc, a_{n - 2})$
+      \State $a^{(1)} \gets (a_1, a_3, \dotsc, a_{n - 1})$
+      \State $y^{(0)} \gets $\Call{Recursive-FFT}{$a^{(0)}$}
+      \State $y^{(1)} \gets $\Call{Recursive-FFT}{$a^{(1)}$}
+      \For{$k = 0$ \textbf{to} $n/2 - 1$}
+        \State $y_k \gets y_k^{(0)} + \omega\ y_k^{(1)}$
+        \State $y_{k + (n/2)} \gets y_k^{(0)} - \omega\ y_k^{(1)}$
+        \State $\omega \gets \omega\ \omega_n$
+      \EndFor
+      \State \Return $y$
+    \EndFunction
+  \end{algorithmic}
+  \caption{Recursive FFT.}
+  \label{alg:rec-fft}
+\end{algorithm}

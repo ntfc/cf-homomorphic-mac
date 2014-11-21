@@ -1,0 +1,270 @@
+%% ---------------------------------------------------------------------------
+%% Thesis.tex -- MAIN FILE (the one that you compile with LaTeX)
+%% ---------------------------------------------------------------------------
+% https://www.sharelatex.com/templates/thesis/graduate-thesis/
+% Set up the document
+% Use the "Thesis" style, based on the ECS Thesis style by Steve Gunn
+% use the draft option to print overfull hbox
+% TODO: change to twoside when done
+% oneside = one side printing and screen reading
+% twoside = for double side printing
+\documentclass[a4paper,11pt,twoside]{Thesis}
+% Location of the graphics files (set up for graphics to be in PDF format)
+\graphicspath{Figures/}
+
+% Include any extra LaTeX packages required
+% Use biblatex to bibliography management
+\usepackage[
+  backend=biber,
+  %style=numeric,% [1], [25], etc
+  style=alphabetic,%[CF04], [Carv14], etc
+  %sorting=ynt, %year,name,title
+  sorting=anyt, %alphabetic label,name,year,title
+  hyperref=true,
+  maxbibnames=15,
+  maxcitenames=3,
+  maxalphanames=5, % with 5 authors, use the 5 initials as label
+  sortcites=true,
+]{biblatex}
+% show a raised + for label with more than 1 author
+\renewcommand*{\labelalphaothers}{$^+$}
+\addbibresource{Bibliography.bib}
+\DefineBibliographyStrings{english}{%
+  bibliography = {References}, % show References on TOC
+}
+% vim-latex's completion only works when the bibliography command is present
+%\bibliography{Bibliography}
+% Todonotes wrongly placed in the margin
+%TODO: remove this by the end? WTF is this for?
+\setlength{\marginparwidth}{2cm}
+
+\usepackage{tikz-cd} % for commutative diagrams
+\usepackage{paralist} % for inline lists
+%% ---------------------------------------------------------------------------
+\begin{document}
+% Begin Roman style (i, ii, iii, iv...) page numbering
+\frontmatter
+
+% Set up the Title Page
+\title  {A practical validation of Homomorphic Message Authentication schemes}
+\authors  {{Nuno Tiago Ferreira de Carvalho}}
+% Do not change this here, instead these must be set in the "Thesis.cls" file,
+% please look through it instead
+\addresses  {\groupname\\\deptname\\\univname}
+\date       {\today}
+\subject    {}
+\keywords   {}
+
+\maketitle
+%% ---------------------------------------------------------------------------
+
+% It is better to have smaller font and larger line spacing than the other way
+% round
+\setstretch{1.5}
+
+% Define the page headers using the FancyHdr package and set up for one-sided
+% printing
+% Clears all page headers and footers
+\fancyhead{}
+% Sets the right side header to show the page number
+\rhead{\thepage}
+% Clears the left side page header
+\lhead{}
+
+% Finally, use the "fancy" page style to implement the FancyHdr headers
+\pagestyle{fancy}
+
+%% ---------------------------------------------------------------------------
+% The Declaration page
+% No headers or footers for the following pages
+%\pagestyle{empty}
+% relative to .build/ folder
+%\includepdf[frame=false,scale=0.935,offset=57 -110]{../../documents/parecer.pdf}
+%% Declaration ended, now start a new page
+%\clearpage
+
+%% ---------------------------------------------------------------------------
+% The "Funny Quote Page"
+% No headers or footers for the following pages
+%\pagestyle{empty}
+%
+%\null\vfill
+%% Now comes the "Funny Quote", written in italics
+%\textit{``Write a funny quote here.''}
+%
+%\begin{flushright}
+%If the quote is taken from someone, their name goes here
+%\end{flushright}
+%
+%\vfill\vfill\vfill\vfill\vfill\vfill\null
+%\clearpage  % Funny Quote page ended, start a new page
+
+% Reset the line-spacing to 1.5 for body text (if it has changed)
+%\setstretch{1.5}
+
+%% ---------------------------------------------------------------------------
+% The Abstract Page
+% Add the "Abstract" page entry to the Contents
+\addtotoc{Abstract}
+\abstractpage{
+  % Add a gap in the Contents, for aesthetics. NO
+  %\addtocontents{toc}{\vspace{1em}}
+  
+  \input{Chapters/Abstract}
+
+}
+% Abstract ended, start a new page
+\cleardoublepage
+
+%% ---------------------------------------------------------------------------
+% The Acknowledgements page, for thanking everyone
+\pagestyle{empty}
+\acknowledgements{
+% Add a gap in the Contents, for aesthetics.
+\addtocontents{toc}{\vspace{1em}}
+
+\vspace{3.5em}
+
+To my supervisor, Professor Manuel Bernardo Barbosa, for the great opportunity,
+all the guidance and all the suggestions that lead me here, many thanks.
+
+To Professor Dario Catalano, for receiving me in Catania and for all the
+precious help and advises given during my stay. A special thanks to Professor
+Mario di Raimondo for the practical suggestions.
+
+To all my friends, specially the ones who kept up with me during these last few
+stressing weeks. A special mention to the ones who somehow were with me during
+these last 6 years of studying.
+
+To my friends in Catania, specially the people from the residenza, for
+understanding the reason of my absence so many times.
+
+Lastly, but not least, to my parents, Domingos and Maria, and to my sister,
+Joana, without whom I wouldn't be here, a profound and sincere thank you for
+providing me the with the necessary conditions and support to be here now.
+\vfill
+
+\begin{otherlanguage}{portuges}
+  Este trabalho foi apoiado pelo Projeto Smartgrids - NORTE-07-0124-FEDER-000056,
+  cofinanciado pelo Programa Operacional Regional do Norte (ON.2 – O Novo Norte),
+  ao abrigo do Quadro de Referência Estratégico Nacional (QREN), através do Fundo
+  Europeu de Desenvolvimento Regional (FEDER).
+\end{otherlanguage}
+
+}
+% End of the Acknowledgements
+\clearpage
+%% ---------------------------------------------------------------------------
+
+% The page style headers have been "empty" all this time, now use the "fancy"
+% headers as defined before to bring them back
+\pagestyle{fancy}
+%% ---------------------------------------------------------------------------
+% Set the left side page header to "Contents"
+\lhead{\emph{Contents}}
+% Write out the Table of Contents
+\tableofcontents
+
+%TODO: add list of figures and list of tables and abbreviations
+%% ---------------------------------------------------------------------------
+% Set the left side page header to "List if Figures"
+%\lhead{\emph{List of Figures}}
+%% Write out the List of Figures
+%\listoffigures
+
+%% ---------------------------------------------------------------------------
+% Set the left side page header to "List of Tables"
+%\lhead{\emph{List of Tables}}
+%% Write out the List of Tables
+%\listoftables
+
+%% ---------------------------------------------------------------------------
+% Set the line spacing to 1.5, this makes the following tables easier to read
+\setstretch{1.5}
+% Start a new page
+\clearpage
+% Set the left side page header to "Abbreviations"
+\lhead{\emph{Abbreviations}}
+\printnomenclature
+
+%% ---------------------------------------------------------------------------
+%% End of the pre-able, contents and lists of things
+%% Begin the Dedication page
+%\clearpage
+%
+%% Return the line spacing back to 1.5
+%\setstretch{1.5}
+%
+%% Page style needs to be empty for this page
+%\pagestyle{empty}
+%\dedicatory{For/Dedicated to/To my\ldots}
+%
+%% Add a gap in the Contents, for aesthetics
+%\addtocontents{toc}{\vspace{2em}}
+
+%% ---------------------------------------------------------------------------
+% Begin normal, numeric (1,2,3...) page numbering
+\mainmatter
+
+% Return the page headers back to the "fancy" style
+\pagestyle{fancy}
+% Clears all page headers and footers
+\fancyhead{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\emph{\leftmark}}
+\fancyhead[LO]{\emph{\rightmark}}
+% Include the chapters of the thesis, as separate files
+% Just uncomment the lines as you write the chapters
+
+\include{Chapters/Chapter1a} % Introduction
+
+\include{Chapters/Chapter2a} % Homomorphic primitives
+
+\include{Chapters/Chapter3a} % Circuits
+
+\include{Chapters/Chapter4a} % Homomorphic Authentication constructions
+
+\include{Chapters/Chapter5a} % Algebraic operations
+
+\include{Chapters/Chapter6a} % Implementation
+
+\include{Chapters/Chapter7a} % Conclusion and future work
+
+%\input{Chapters/Chapter7a} % Conclusion
+
+%% ---------------------------------------------------------------------------
+% Add a gap in the Contents, for aesthetics
+\addtocontents{toc}{\vspace{2em}}
+
+\label{References}
+% Change the left side page header to "Bibliography"
+\lhead{\emph{References}}
+% Show all references present in the Bibliography file
+%\nocite{*}
+
+\printbibliography[heading=bibintoc]
+
+%% ---------------------------------------------------------------------------
+%% Now begin the Appendices, including them as separate files
+
+%% Add a gap in the Contents, for aesthetics
+%\addtocontents{toc}{\vspace{2em}}
+
+% Cue to tell LaTeX that the following 'chapters' are Appendices
+%\appendix
+%
+%\lhead{\emph{Appendices}}
+
+%\input{Appendices/AppendixA} % Software documentation
+%
+%\input{Appendices/AppendixB} % Pinocchio README
+%
+%%\input{Appendices/AppendixC} % Appendix Title
+%
+%% Add a gap in the Contents, for aesthetics
+%\addtocontents{toc}{\vspace{2em}}
+%\backmatter
+
+% The End
+\end{document}
+%% ---------------------------------------------------------------------------

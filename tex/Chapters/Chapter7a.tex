@@ -1,0 +1,62 @@
+\chapter{Conclusion}\label{chap:conclusion}
+We now present a comprehensive synthesis of all the work accomplished, as well
+as what could be done in the future in order to further enhance this work.
+
+Once the objectives of this dissertation were defined, we started studying some
+interesting primitives regarding delegation of computations. We did an informal
+review of Homomorphic Encryption, Verifiable Computation and Succinct
+Non-Interactive Arguments of Knowledge, as well of Homomorphic Authentication.
+
+All of these primitives need some way to represent the computations so that
+both clients and servers are able to execute or verify them. The common way of
+doing it is by using a circuit representation of the program -- boolean or
+arithmetic. We also studied two tools that are able to convert code from higher
+level languages to an equivalent circuit representation.
+
+We then proceeded to make a more deep analysis of Homomorphic Authentication,
+specially Homomorphic Signatures and Homomorphic MACs. We were able to
+list and understand their current limitations in both security and
+practicability, which lead us to the conclusion that Homomorphic Signatures are
+not yet practical nor totally secure.
+
+We then chose to implement the two constructions of
+\textcite{catalano:fiore:2013} because they seemed to be ones with more
+practical application. Our main focus was on determining if the homomorphic
+computation of a function (to obtain a MAC) was practical so that it could
+easily be computed by a more powerful external machine.
+
+In order to achieve efficient results, we had to study an efficient method for
+the multiplication of two polynomials in $\Theta(n \log{n})$ time: the Fast
+Fourier Transform. This faster method becomes specially critical when the
+degree of the polynomials is high.
+
+Finally, after having an implementation of \textcite{catalano:fiore:2013} in
+\texttt{C}, and by using the FFT for polynomial multiplications, we were ready
+to measure its performance by using random polynomials, described as arithmetic
+circuits.
+
+As we stated in the previous chapter, the obtained results were very positive,
+which means that \textcite{catalano:fiore:2013} is practical. The major problem
+is within the homomorphic computation as expected, but if we consider that these
+computations are supposed to be executed by a powerful machine, our results
+seem very good.
+
+\section{Future work}
+From a practical point of view, there are many possible things that could be
+done in the future. The first and the most obvious one is to implement the work
+of \textcite{backes:fiore:reischuk:2013}, which we could use to obtain an
+efficient verification algorithm (in the amortized sense).
+
+One other area with room for improvement is the size of the input messages we
+use, which now is only of 128 and 256 bits. If we supported bigger message
+sizes we would be able to use more practical message values. A possible
+solution would be the use of a \textcite{lubyrackoff} construction (using AES
+as the round function) that would allows us to use messages up to 512 bits.
+
+Another interesting work would be the creation of a library with support for
+various Homomorphic Authentication primitives, much like the efforts done with
+HELib\footnotemark for Homomorphic Encryption. Such library could also have the
+possibility of a better communication with
+\citetool{parno:howell:gentry:raykova:2013} or \citetool{tinyram} to easily
+convert \texttt{C} programs into arithmetic circuits.
+\footnotetext{\url{https://github.com/shaih/HElib}}

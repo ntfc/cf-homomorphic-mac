@@ -1,0 +1,186 @@
+%% ---------------------------------------------------------------------------
+% INTRODUCTION
+%% ---------------------------------------------------------------------------
+\chapter{Introduction}\label{chap:intro}
+A cloud computing provider allows a user to lease computing and storage
+resources from remote computers that are far more powerful than the user's.
+This enables her to perform operations over (some portion of) outsourced data
+that is remotely stored and then only the results of these operations are
+returned to the user. However, the current infrastructures of cloud computing
+services do not provide any security against untrusted cloud operators, making
+them unsuitable for storing sensitive information such as medical, financial or
+any personal records.
+
+A possible solution to this problem is the use of homomorphic cryptography.
+This concept was first presented by \textcite{rivest:adleman:dertouzos:1978}
+about 30 years ago. However, it remained an open problem until recently, when
+the first truly homomorphic schemes were proposed. With these schemes it became
+possible to perform computations on encrypted data such that the cloud
+computing provider does not have access to the decrypted information, therefore
+preserving \emph{privacy} of the outsourced data. The first \nom{FHE}{Fully
+Homomorphic Encryption} scheme was proposed in a ground-breaking work by
+\textcite{gentry:2009:FHE}. His scheme allows the computation of arbitrary
+computations over encrypted data without being able to decrypt. Unfortunately
+it is not yet practical, but several small improvements have been proposed
+which could lead it to be practical in the near future.
+
+But, and not only in the context of cloud computing, it is also important to
+guarantee the \emph{authenticity} of the computations performed on the
+outsourced data. FHE schemes by itself only guarantee privacy, and not
+authenticity. To do so, two main goals need to be fulfilled: \emph{security}
+and \emph{efficiency}. Security guarantees that the server is able to ``prove''
+the correctness of the delegated computation. Efficiency means that the user is
+able to efficiently check the proof by requiring far less resources than those
+needed to execute the delegated computation (including both computation and
+communication).
+
+%% ---------------------------------------------------------------------------
+% MOTIVATION
+%% ---------------------------------------------------------------------------
+\section{Motivation}
+To guarantee authenticity for computations on outsourced data a new set of
+homomorphic primitives were defined: homomorphic signatures (asymmetric
+setting) and homomorphic message authenticators (symmetric setting).
+
+The first notions of homomorphic signatures were introduced around 15 years ago
+by \textcite{rivest:micali:chari:rabin:2001}, and then
+\textcite{johnson:molnar:song:wagner:2002} presented a more complete
+definition. An homomorphic signature scheme allows a user to generate
+signatures $\sigmaSpace{1}{k}$ on messages $\mSpace{1}{k}$ so that later anyone
+(without the private signing key) can compute a signature $\sigma'$ that is
+valid for the value $m' = f(\mSpace{1}{k})$. Also, it allows anyone that holds
+the public verification key to verify the results.
+\textcite{boneh:freeman:2011} constructed a scheme that evaluates multivariate
+polynomials on previously signed data, but they also stated that the
+construction of a fully homomorphic signatures scheme remains an open problem.
+
+The secret key analogue of homomorphic signatures are homomorphic message
+authenticators (homomorphic \nom{MAC}{Message Authentication Code}s for short)
+that were introduced by \textcite{gennaro:wichs:2012}. In this setting, there
+is a public evaluation key and a secret key shared by Alice and Bob, which is
+used to authenticate some messages $\mSpace{1}{k}$. Then, anybody who has the
+public evaluation key can compute a short tag $\sigma$ that certifies the value
+$y = f(\mSpace{1}{k})$ as the output of $f$. Notice that $\sigma$ does not
+simply authenticate $y$ out of context, it only certifies it as the output of
+a specific $f$. Later, Bob can verify that $y$ is indeed the output of
+$f(\mSpace{1}{k})$ without even knowing the value of the messages.
+%
+\textcite{gennaro:wichs:2012} also presented a construction with support for
+arbitrary computations, a fully homomorphic MAC, but its security is based on
+a weaker model (the adversary cannot ask for verification queries, only for
+authentication queries).
+
+To overcome this problem, and relying on much of the work from
+\citeauthor{gennaro:wichs:2012}, \textcite{catalano:fiore:2013} constructed a
+very simple and efficient scheme with support for a more restricted class of
+computations. Furthermore, its security is based on a stronger model with
+support for multiple verification queries.
+%
+But both of these constructions suffered from a common problem: the
+verification algorithm runs in time proportional to the size of the function.
+The scheme from \textcite{backes:fiore:reischuk:2013} tries to solve this
+problem, and it is the first homomorphic MAC scheme with efficient (amortized)
+verification.
+
+\begin{comment}
+As for the homomorphic MAC schemes, they all rely on the theory of arithmetic
+circuits for the computation of functions over some messages. Simply put, an
+arithmetic circuit over a field $\bbF$ and a set of variables $X
+= \{\tauSpace{1}{k}\}$, is a directed acyclic graph with the following
+properties.  Each node in the graph is called \emph{gate}. Gates with in-degree
+0 are called \emph{input} gates while gates with out-degree 0 are called
+\emph{output} gates. Each input gate is labeled by either a \emph{variable} or
+a \emph{constant}. A variable input gate is labeled with a binary string
+$\tau_i$ and can take arbitrary values in $\bbF$. A constant input gate is
+labeled with some constant $c$ and can only take some fixed value $c \in \bbF$.
+Each \emph{internal} gate (gates with in/out-degree greater than 0) is labeled
+by either $+$ or $\times$, sum and product gates, respectively. The \emph{size}
+of the circuit is the number of its gates. The \emph{depth} is the length of
+the longest path from input to output.
+
+Polynomials are evaluated with arithmetic circuits as follows: input gates
+compute the polynomial defined by their labels. Sum gates compute the
+polynomial obtained by the sum of the (two) polynomials on their incoming
+wires, while product gates compute the product of the two polynomials on their
+incoming wires. The output of the circuit is the value contained on the
+outgoing wire of the output gate.
+\end{comment}
+
+%% ---------------------------------------------------------------------------
+% OBJECTIVES
+%% ---------------------------------------------------------------------------
+\section{Objectives}
+We intend to study the current homomorphic MAC constructions in order to better
+understand their strengths and pitfalls. Having realized what those are, we
+want to implement one of these constructions, \textcite{catalano:fiore:2013} to
+be more precise. The reason we ignore the implementation of
+\textcite{gennaro:wichs:2012} is because of its reduced security and because it
+relies heavily on lattice based techniques, which are not yet efficient.
+
+Our main goal is then to measure the overhead introduced by the homomorphic
+evaluation of \cite{catalano:fiore:2013}. In practical terms, what we intend to
+measure is the amount of extra work that the external server must do to
+homomorphically compute the function in comparison to a normal computation.
+
+We will also measure the complexity of all the other operations of
+\textcite{catalano:fiore:2013} in order to check if it is already practical.
+
+\begin{comment}
+In this work we will mainly focus on homomorphic MAC schemes, and all of them
+rely on the theory of arithmetic circuits.
+%
+In practical terms, it is important to stress that arithmetic circuits should
+be seen as computing \emph{specific} polynomials in $\bbF[x]$ rather than
+functions $\bbF^{|x|}$ to $\bbF$. Essentially, one is interested in the formal
+computation of polynomials rather than the functions that these polynomials
+define. This is because a function may be expressed by a polynomial in several
+ways, while, in general, a polynomial defines a unique function.\footnote{A
+  good example of this case is the zero function. $f = x^2 + x$ is clearly not
+the zero function, unless it is in $\bbF_2$.}
+
+The scheme from \textcite{gennaro:wichs:2012} relies heavily on lattice based
+techniques, which are not practically efficient, and given that the scheme's
+security is based on a weaker security model, we choose not to study its
+implementation, but only its theoretical definitions. We will instead focus our
+implementation efforts on the last two
+schemes~\cite{catalano:fiore:2013,backes:fiore:reischuk:2013} that are
+efficient in theory, but it is not known if they have any practical
+application.  Our main objective is to determine how practicable they are.
+
+However, it is still interesting to see how both homomorphic signatures and MAC
+schemes work. We will study these schemes to see what functionalities they
+offer and what limitations they might have.
+
+In the end, an overall comparison between the implemented schemes will be
+presented in order to determine which one is practically more efficient.
+\end{comment}
+
+%% ---------------------------------------------------------------------------
+% STRUCTURE OF THE DOCUMENT
+%% ---------------------------------------------------------------------------
+\section{Structure of the document}
+This document is split in seven chapters. \refchapter{chap:intro} is an
+introduction to the problem of homomorphic authentication and describes what is
+the purpose of this dissertation.
+
+\begin{description}
+  \item[\refchapter{chap:delegation}] presents a brief review of the current
+    main techniques used for delegation of computations.
+  \item[\refchapter{chap:circs}] presents an alternative model of computation
+    based on circuits. We start by defining what are circuits, and we explain
+    how they can be represented and how can we evaluate them. We also present
+    two conversion tools that convert \texttt{C} into arithmetic circuits.
+  \item[\refchapter{chap:homo-auth}] describes the analysis we made to the
+    homomorphic authentication primitives. We start by introducing the necessary
+    preliminaries and definitions of homomorphic signatures and MACs, and then
+    by presenting the actual constructions for both settings. In the end we
+    state what the current limitations and open problems are in both settings.
+  \item[\refchapter{chap:algebraic}] introduces the main algebraic operations
+    necessary for our work. The main point of this chapter is the study of an
+    efficient polynomial multiplication algorithm based on FFT.
+  \item[\refchapter{chap:impl}] presents our experimental results. We show here
+    how our implementation performs.
+\end{description}
+
+Finally, in \refchapter{chap:conclusion} we present the final conclusions
+of all the work we developed, as well as what can be done in the future.

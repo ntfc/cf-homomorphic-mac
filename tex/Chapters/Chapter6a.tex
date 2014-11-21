@@ -1,0 +1,253 @@
+\chapter{Implementation and experimental results}\label{chap:impl}
+In the previous chapters we have introduced the two homomorphic MACs
+(\citescheme{catalano:fiore:2013}1 and \citescheme{catalano:fiore:2013}2) that
+we intend to implement, as well as the necessary theory behind them. Now we
+will present some implementation details, and finally an analysis of the
+efficiency of the two homomorphic MACs.
+
+\section{Programming Language and Libraries}
+Our choice of programming language was \texttt{C}. It is a language that
+provides more low-level operations which are quite useful to cryptographic
+applications. However, that can be both an advantage and a disadvantage, as it
+is easier too create complicated situations with nasty side-effects, which are
+not clear at first sight. But for our work we think that by using
+\texttt{C} we can obtain the best possible results that otherwise wouldn't be
+possible in some other higher level languages such as Python or Java.
+
+For cryptographic purposes we always need to work with big numbers, but
+\texttt{C} only has native support for fixed-length arithmetic (normally with
+machine specific length). Therefore we need to either use an existing big
+number library, or to implement our own. The latter option is clearly a bad
+idea since we already have at our disposal many efficient and mature libraries
+ready for a wide range of machines and architectures.
+
+We choose to use GMP \cite{gmp} for ``bignum'' arithmetic. GMP is designed to
+have good performance with both small numbers and big numbers with thousands of
+bits. GMP chooses algorithms depending on the size of the operands, so the
+algorithm used for a small number multiplication is different from the one used
+to multiply two ``bignums''. The great speed of GMP is the fruit of many years
+of optimizations provided by the community, which we can make use of without
+having to worry about the underlying machine's hardware.  Besides ``bignum''
+arithmetic, GMP also provides the facilities for random numbers generation.
+
+However, GMP does not have support for polynomial arithmetic, which we need for
+\citescheme{catalano:fiore:2013} tags. Once again, instead of implementing from
+scratch all the algorithms presented in \refchapter{chap:algebraic}, we decided
+to use an established library, in this case NTL \cite{ntl}.  NTL is
+a high-performance, portable, \texttt{C++} library with support for many Number
+Theory operations, including the FFT multiplication that we need\footnotemark.
+\footnotetext{Although it is written in \texttt{C++}, we can still link it in
+such a way that it can be used with our \texttt{C} code.}
+
+Lastly, \citescheme{catalano:fiore:2013} makes use of a PRF in both
+authentication and verifications phases. Just as suggested by
+\citeauthor{catalano:fiore:2013}, we can use AES since it is extremely
+efficient. We used Libgcrypt's \cite{libgcrypt} implementation of AES. Besides
+cryptographic protocols, Libgcrypt also has support for big number arithmetic,
+but is based on an older version of GMP, and therefore it is not as efficient
+for ``bignum'' operations.
+
+\section{Polynomial arithmetic}
+We have already seen that (univariate) polynomial arithmetic is critical for
+the efficiency of the \citescheme{catalano:fiore:2013} schemes.  Both addition
+and multiplication by a constant take $\Theta(n)$ time, where $n$ is the number
+of coefficients of a polynomial. But on the other hand, the classical
+multiplication method takes $\Theta(n^2)$ time, and that's why it's better to
+use the FFT multiplication method described in \refchapter{chap:algebraic},
+which takes $\Theta(n \log{n})$ time.
+
+We now present a brief overview on how we implemented these three operations
+using the libraries mentioned in the previous section.
+
+\paragraph*{Addition}
+Polynomial addition is quite straightforward: given with two polynomials
+in coefficient representation (i.e., simple arrays in \texttt{C}), addition is
+simply the addition of two vectors element-by-element. Such addition is done
+using the function from GMP.
+
+%\input{Algorithms/poly-add}
+
+\paragraph*{Multiply by constant}
+Multiplication by constant is fairly similar to addition, but where one of the
+arrays has just one element i.e., the constant value. By using the GMP
+multiplication function, we can take advantage of the possible optimizations
+present in it where a different algorithm (classical, Karatsuba, FFT, etc) is
+chosen based on the size of the operands.
+
+%\input{Algorithms/poly-constmul}
+
+\paragraph*{Multiplication of two polynomials}
+It is not hard to implement a machine specific FFT (i.e., using only machine
+numbers such as \texttt{float}'s), but the complexity involved to achieve an
+implementation closer to $\Theta(n \log{n})$ is very high. One other aspect is
+that we are working with big numbers, and to implement FFT with such numbers
+would introduce even more complexity.
+The time spent in trying to achieve an efficient implementation would be
+significant, and we probably would never end up with a time closer to $\Theta(n
+\log{n})$. And also, when implementing a FFT, it is usual to use an iterative
+version rather than the recursive version of \refsec{sec:fft} which improves
+efficiency, but is also significantly raises the efforts of implementation.
+
+With these limitations in mind, \textcite{Fateman:2010} studied the impact of
+using libraries like NTL instead of choosing to implement FFT from scratch, and
+reached the conclusion that it is much better to rely on an existent library
+given that it is much simpler, and guaranteed to be fast (if the library is
+obviously efficient).
+%His technique works by encoding the coefficients as a single large integer,
+%then use the integer multiplication GMP or NTL (for such large integers, FFT
+%multiplication is used), and then decodes them using a suitable technique.
+\citeauthor{Fateman:2010} also noticed that by using NTL for FFT multiplication
+can be more efficient if NTL is compiled with GMP support\footnotemark.
+\footnotetext{NTL's author also advises to compile NTL with GMP support for
+better results}
+
+% Lixo
+%For the case of multivariate polynomial multiplication, we take a simple
+%approach. We start by converting the coefficients (as GMP \texttt{mpz\_t}'s)
+%into NTL coefficients, represented as \texttt{ZZ\_p}'s. With them, we can
+%construct a NTL polynomial \texttt{ZZ\_pX} and then call the FFT multiplication
+%function of two polynomials. Finally, it is only a matter of converting the
+%resulting polynomial coefficients' back to GMP coefficients.
+
+To use the NTL's multiplication function we have to first convert the GMP
+numbers to the corresponding NTL format, and then use them to create a NTL
+polynomial. After the NTL multiplication, the inverse conversion is done to
+obtain the resulting polynomial as GMP coefficients.  These conversions
+obviously introduce a small, non-visible, overhead in the overall
+multiplication process, but it's only a very small price to pay for
+a full-fledged FFT multiplication function.
+
+%\todo[inline,size=\normalsize]{BEGIN OF CONTENT UNKNOWN}
+%To measure the efficiency of polynomial multiplication, we first generate two
+%lists of coefficients with $n$ random values modulo some random prime $p$ of
+%roughly $\lambda$ bits. Then we use both the classical and
+%the efficient multiplication methods over them. The results obtained are
+%summarized in below in \todo{ref}.
+%
+%\input{Graphics/PolyMul}
+%\todo[inline,size=\normalsize]{END OF CONTENT UNKNOWN}
+
+\section{Experimental results}
+We now present our experimental results by first explaining how we generated
+our test case circuits, and then by providing more details of the
+\citescheme{catalano:fiore:2013}'s performance.
+All tests were performed using a x86\_64 GNU/Linux on a machine with 4GB RAM
+and an Intel(R) Core(TM)2 Duo CPU T9600 2.8GHz. The \texttt{C} compiler was gcc
+4.9.1 x86\_64 and the library versions were: GMP 6.0.0, NTL 6.2.1 and Libgcrypt
+1.6.2.
+
+\paragraph*{Circuits generation}
+To measure the performance of \citescheme{catalano:fiore:2013} we tested it
+with circuits computing polynomials of various degrees.
+What we did was to create random polynomials using Sage \cite{sage}, and then
+convert them to an appropriate arithmetic circuit representation.
+
+%These polynomials were generated by using Sage \cite{sage} and converted to
+%\texttt{C} using Python.  Finally, we used
+%\citetool{parno:howell:gentry:raykova:2013} to create the corresponding
+%arithmetic circuits.
+%The first stage with Sage, where we generated a polynomial of degree $n$, was
+%performed as follows:
+%\begin{enumerate}
+%  \item Choose a random number of variables $v \in {[\frac{n}{2}, 2n]}$;
+%  \item Choose a random number of coefficients $c \in {[\frac{n+v}{2},
+%    2(n+v)]}$;
+%  \item Use Sage to generate a random polynomial of degree $n$ with $v$
+%    variables and $c$ coefficients (or terms).
+%\end{enumerate}
+%
+%After having the polynomial from Sage, the conversion to \texttt{C} was almost
+%a ``one-to-one'' conversion: $5x_1 + 10x_2^3$ would become the \texttt{C} code
+%\texttt{(5 * x1) + (10 * pow(x2, 3))}. This piece of code was placed in the
+%body of the \texttt{outsource} function used by
+%\citetool{parno:howell:gentry:raykova:2013} in order to convert it to an
+%arithmetic circuit.
+
+%We repeated this process 100 times for each degree $d \in \{10, 20, 50, 100,
+%125, 150, 200, 300\}$.
+We generated polynomials of degree $n$ between 10 (small enough) and 300 (big
+enough). The average dimensions of the generated circuits are shown in
+\reftable{tab:circuits}, and since \citetool{parno:howell:gentry:raykova:2013}
+also contains some example polynomials, we test them with
+\citescheme{catalano:fiore:2013} as well (we refer to them as
+\citetool{parno:howell:gentry:raykova:2013}'s polynomials).
+
+\input{Tables/circuits}
+
+\paragraph*{\citescheme{catalano:fiore:2013} performance}
+Using the polynomials we previously generated, we can now measure the
+performance of \citescheme{catalano:fiore:2013}.
+
+The results we are more interested in are the execution times of \Eval.
+In a practical scenario, \Eval is executed by the external server,
+which is expected to have much more computational power than the client who
+executes \Vrfy.
+
+Because \Vrfy runs in time proportional to a circuit evaluation, we know that
+execution times will be similar, with only (small) overhead of \Vrfy because of
+the algebraic operations it performs over the ``polynomial tag''.
+
+We tested both set of polynomials with \citescheme{catalano:fiore:2013}1 and
+\citescheme{catalano:fiore:2013}2, but the only difference between the two is
+that the latter has a slower \KeyGen (because of the necessary $D$
+exponentiations) and creates succinct tags of constant size (they are simply
+a group element), which is why we omitted \citescheme{catalano:fiore:2013}2
+from the results.
+
+To measure \citescheme{catalano:fiore:2013}'s performance, we used a different
+set of keys for each circuit, and the input messages and labels were chosen at
+random. The detailed performance results are shown in \reftable{tab:cf-perf}
+(for our randomly generated polynomials) and in
+\reftable{tab:cf-perf-pinocchio} (using
+\citetool{parno:howell:gentry:raykova:2013}'s polynomials). For
+\reftable{tab:cf-perf} we run \citescheme{catalano:fiore:2013} once in every
+one of the 100 circuits of each degree, and the results presented are the
+average of all these executions; for \reftable{tab:cf-perf-pinocchio} we run
+\citescheme{catalano:fiore:2013} 10 times for each circuit and show the average
+times for each circuit.
+
+\input{Tables/cf-results}
+
+\input{Tables/cf-pinocchio-results}
+
+Without much surprise, the authentication algorithm \Auth is extremely fast (in
+less than 2ms we can authenticate about 300 messages). Also note that in
+a practical scenario, the client might not outsource (and therefore
+authenticate) all the messages at once, but do it incrementally instead.
+
+Just as expected, the homomorphic evaluation \Eval is the slowest operation.
+However, the obtained results are still very good for a homomorphic primitive.
+In \reftable{tab:cf-perf}, to homomorphically evaluate a polynomial of $n
+= 300$, it ``only'' takes about 80s. But once again, in a realistic scenario we
+would be using a much more powerful machine for the homomorphic evaluation and
+the results would certainly be more efficient.
+
+However, as mentioned by \citeauthor{catalano:fiore:2013}, the tag's size of
+\citescheme{catalano:fiore:2013}1 grows linearly with the degree of the
+evaluated circuit, and with $n = 300$ we obtain tags of about 10kB.
+By using \citescheme{catalano:fiore:2013}2 we can obtain smaller 
+tags consisting of only one group $\bbG$ element, at the cost of losing
+composition of programs, and by turning the \KeyGen operation slower because of
+the necessary $D$ exponentiations.
+
+It is also not a surprise to see that the \Vrfy times do not differ much from
+the circuit evaluation, with the introduction of only a small overhead
+responsible for the algebraic computations.
+%\todo[inline,size=\small]{ok, eu e que fiquei com a ideia errada quando mostrei
+%ao Dario os tempos do Vrfy, e ele disse que nao estava a espera que fossem tao
+%rapidos. Nestes casos o Vrfy e rapido porque os circuitos nao sao muito
+%grandes.}
+
+Regarding the results of \citetool{parno:howell:gentry:raykova:2013}'s
+polynomials in \reftable{tab:cf-perf-pinocchio}, their circuit evaluation
+consists of a much larger number of gate multiplications than our randomly
+generated polynomials. Because of that, their circuit evaluation takes more
+time which makes both the homomorphic evaluation \Eval and \Vrfy
+slower.
+%\todo[inline,size=\small]{nao sei se estou a explicar bem que eu quero dizer
+%que os exemplos de polys que vem com o pinocchio sao muito maiores do que os
+%que eu gerei, e por isso e que os seus tempos sao mais lentos}
+
+The full source code and the respective documentation is available online as
+a Git repository\footnotemark.
+\footnotetext{\url{https://bitbucket.org/ntfc/cf-homomorphic-mac/overview}}

@@ -1,0 +1,163 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{Commands}
+
+% read this about xspace
+% Drawbacks: http://tex.stackexchange.com/q/86565
+% Space after latex commands: http://tex.stackexchange.com/q/31091
+\RequirePackage{xspace}
+\RequirePackage{mathtools}
+
+% new command to declare new abbreviations
+\newcommand*{\nom}[2]{#1\nomenclature{#1}{#2}}
+% TODO: fix this..
+\newcommand*{\nomsf}[2]{\textsf{#1}\nomenclature{#1}{#2}}
+% declare abbreviation
+
+% automatically insert Figure,Table, etc when referencing
+% NOTE: when labeling Figure and Table, \label must be inside the \caption!
+%   https://en.wikibooks.org/wiki/LaTeX/Labels_and_Cross-referencing#Fixing_wrong_labels
+\newcommand*{\reffigure}[1]{\hyperref[#1]{Figure~\ref{#1}\xspace}}
+\newcommand*{\reftable}[1]{\hyperref[#1]{Table~\ref{#1}\xspace}}
+\newcommand*{\refdef}[1]{\hyperref[#1]{Definition~\ref*{#1}\xspace}}
+\newcommand*{\reftheorem}[1]{\hyperref[#1]{Theorem~\ref{#1}\xspace}}
+\newcommand*{\reflemma}[1]{\hyperref[#1]{Lemma~\ref{#1}\xspace}}
+\newcommand*{\refexample}[1]{\hyperref[#1]{Example~\ref{#1}\xspace}}
+\newcommand*{\refchapter}[1]{\hyperref[#1]{Chapter~\ref{#1}\xspace}}
+\newcommand*{\refsec}[1]{\hyperref[#1]{Section~\ref{#1}\xspace}}
+\newcommand*{\refappendix}[1]{\hyperref[#1]{Appendix~\ref{#1}\xspace}}
+\newcommand*{\refequation}[1]{\hyperref[#1]{Equation~\ref{#1}\xspace}}
+\newcommand*{\refalg}[1]{\hyperref[#1]{Algorithm~\ref{#1}\xspace}}
+% to ref algorithms, use \algref from algorithmx
+
+\newcommand*{\citescheme}[1]{\citefield{#1}{usera}}
+\newcommand*{\citetool}[1]{\citefield{#1}{userb}}
+% equivalent to \textcite
+%\newcommand*{\citeandauthor}[1]{\citeauthor{#1} \cite{#1}}
+\newcommand*{\textcitescheme}[1]{\citescheme{#1} \cite{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MATH
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% newcommand vs declaremathoperator: http://tex.stackexchange.com/a/67529
+\newcommand*{\bbF}{\mathbb{F}}
+\newcommand*{\bbG}{\mathbb{G}}
+\newcommand*{\bbN}{\mathbb{N}}
+\newcommand*{\bbQ}{\mathbb{Q}}
+\newcommand*{\bbR}{\mathbb{R}}
+\newcommand*{\bbZ}{\mathbb{Z}}
+
+\newcommand*{\calA}{\mathcal{A}}
+\newcommand*{\calC}{\mathcal{C}}
+\newcommand*{\calF}{\mathcal{F}}
+\newcommand*{\calG}{\mathcal{G}}
+\newcommand*{\calI}{\mathcal{I}}
+\newcommand*{\calJ}{\mathcal{J}}
+\newcommand*{\calM}{\mathcal{M}}
+\newcommand*{\calO}{\mathcal{O}}
+\newcommand*{\calP}{\mathcal{P}}
+\newcommand*{\calR}{\mathcal{R}}
+\newcommand*{\calX}{\mathcal{X}}
+
+%% Big-O notation:
+% big-O: \calO or \mathcal{O}
+% big theta: \Theta
+% big omega: \ohm
+% little-o: o
+
+% fractions
+%running fraction with slash - requires math mode.
+\newcommand*\rfrac[2]{{}^{#1}\!/_{#2}}
+
+\newcommand*{\equals}{\overset{?}{=}}
+
+\DeclareMathOperator{\poly}{\mathsf{poly}}
+
+% \len is printed as \text in math mode
+\DeclareMathOperator{\len}{len}
+\DeclareMathOperator{\negl}{negl}
+\DeclareMathOperator{\id}{id}
+\DeclareMathOperator{\HMAC}{\mathsf{HMAC}}
+\DeclareMathOperator{\HSIG}{\mathsf{HSIG}}
+\DeclareMathOperator{\HMACML}{\HMAC-\mathsf{ML}}
+\DeclareMathOperator{\EVHMAC}{\mathsf{EVH}-\mathsf{MAC}}
+\DeclareMathOperator{\Degree}{degree}
+\DeclareMathOperator{\DFT}{DFT}
+\DeclareMathOperator{\AND}{AND}
+\DeclareMathOperator{\OR}{OR}
+\DeclareMathOperator{\NOT}{NOT}
+
+% abs
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}%
+% Swap the definition of \abs* and \norm*, so that \abs
+% and \norm resizes the size of the brackets, and the 
+% starred version does not.
+\let\oldabs\abs
+\def\abs{\@ifstar{\oldabs}{\oldabs*}}
+\let\oldnorm\norm
+\def\norm{\@ifstar{\oldnorm}{\oldnorm*}}
+
+% as seen here: https://en.wikibooks.org/wiki/TeX/ifmmode
+\newcommand*{\SansSerif}[1]{%
+  \ifmmode %
+    \mathsf{#1} %
+  \else %
+    \textnormal{\textsf{#1}}\xspace %
+  \fi%
+}
+% typeset algorithms
+\newcommand*{\KeyGen}{\SansSerif{KeyGen}}
+\newcommand*{\Enc}{\SansSerif{Enc}}
+\newcommand*{\Dec}{\SansSerif{Dec}}
+\newcommand*{\Sign}{\SansSerif{Sign}}
+\newcommand*{\Auth}{\SansSerif{Auth}}
+\newcommand*{\Vrfy}{\SansSerif{Vrfy}}
+\newcommand*{\Eval}{\SansSerif{Eval}}
+\newcommand*{\GateEval}{\SansSerif{GateEval}}
+\newcommand*{\VrfyPrep}{\SansSerif{VrfyPrep}}
+\newcommand*{\EffVrfy}{\SansSerif{EffVrfy}}
+\newcommand*{\PolyEval}{\SansSerif{PolyEval}}
+\newcommand*{\GroupEval}{\SansSerif{GroupEval}}
+\newcommand*{\CFEval}{\SansSerif{CFEval}}
+\newcommand*{\F}{\SansSerif{F}}
+\newcommand*{\Comp}{\SansSerif{Comp}}
+
+\newcommand*{\ek}{\SansSerif{ek}}
+\newcommand*{\pk}{\SansSerif{pk}}
+\newcommand*{\sk}{\SansSerif{sk}}
+\newcommand*{\vk}{\SansSerif{vk}}
+\newcommand*{\pp}{\SansSerif{pp}}
+\newcommand*{\bgpp}{\SansSerif{bgpp}}
+\newcommand*{\on}{\SansSerif{on}}
+\newcommand*{\off}{\SansSerif{off}}
+
+% Using discretionary to break math mode lines on comma
+% With tuples, use tuple{a,b,c} to produce a,b,c
+% See: http://users.ugent.be/~gdschrij/LaTeX/textricks.html#mathcommabreak
+% and: https://tex.stackexchange.com/a/19100
+% and: http://tex.stackexchange.com/q/1959
+\mathchardef\breakingcomma\mathcode`\,
+{\catcode`,=\active
+  \gdef,{\breakingcomma\discretionary{}{}{}}
+}
+\newcommand{\tuple}[1]{\mathcode`\,=\string"8000 #1}
+
+%\newcommand*{\interval}[2]{#1, \discretionary{}{}{} \dotsc,
+%  \discretionary{}{}{}#2}
+\newcommand*{\interval}[2]{\tuple{#1, \dotsc,#2}}
+% receives a variable, a start and an end number, and prints
+% variable_start, \dotsc, variable_end
+%\newcommand*{\setSpace}[3]{#1_{#2}, \discretionary{}{}{} \dotsc,
+%  \discretionary{}{}{} #1_{#3}}
+\newcommand*{\setSpace}[3]{\tuple{#1_{#2}, \dotsc, #1_{#3}}}
+%\newcommand*{\functionSpace}[4]{#1_{#2}(#4), \dotsc, #1_{#3}(#4)}
+\newcommand*{\functionSpace}[4]{\tuple{#1_{#2}(#4), \dotsc, #1_{#3}(#4)}}
+\newcommand*{\tauSpace}[2]{\setSpace{\tau}{#1}{#2}}
+\newcommand*{\mSpace}[2]{\setSpace{m}{#1}{#2}}
+\newcommand*{\sigmaSpace}[2]{\setSpace{\sigma}{#1}{#2}}
+\newcommand*{\fSpace}[2]{\setSpace{f}{#1}{#2}}
+
+% receives a function name, a function input and output space
+\newcommand*{\function}[3]{#1\colon \discretionary{}{}{} #2 \to #3}
+
+\endinput

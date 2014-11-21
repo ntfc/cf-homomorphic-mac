@@ -1,0 +1,86 @@
+\pgfplotstableread{Data/polymul-128.dat}{\polymulone}
+\pgfplotstableread{Data/polymul-256.dat}{\polymultwo}
+
+\begin{figure}
+  \centering
+  \begin{minipage}[b]{.5\linewidth}
+    %%%%%%%%%%%%%%%%%%%%%%
+    \begin{tikzpicture}[scale=0.9]
+      \begin{axis}[
+        xlabel={$n$},
+        every axis x label/.style={
+          at={(axis description cs:0.5,-0.05)},
+          anchor=north,
+        },
+        ylabel={Time (ms)},
+        every axis y label/.style={
+          at={(axis description cs:-0.2,0.5)},
+          rotate=90,
+          anchor=north,
+        },
+        legend style={at={(0.4,0.9)}},
+        axis x line=bottom,
+        axis y line=left,
+        style={font=\scriptsize},
+        ]
+        
+        \addplot+[smooth,mark=none,red,line width=0.5pt] table
+          [x={n}, y={classical},
+          %select coords between index={1}{10}
+          ]
+            {\polymulone};
+        \addlegendentry{$\lambda = 128$};
+        
+        \addplot+[smooth,mark=none,blue,line width=0.5pt] table
+          [x={n}, y={classical},
+          %select coords between index={1}{10}
+          ]
+            {\polymultwo};
+        \addlegendentry{$\lambda = 256$};
+      \end{axis}
+    \end{tikzpicture}
+    \subcaption{Classical $\Theta(n^2)$ multiplication.}\label{fig:polymul-nofft}
+  \end{minipage}%
+  \begin{minipage}[b]{.5\linewidth}
+    %%%%%%%%%%%%%%%%%%%%%%
+    \begin{tikzpicture}[scale=0.9]
+      \begin{axis}[
+        xlabel={$n$},
+        every axis x label/.style={
+          at={(axis description cs:0.5,-0.05)},
+          anchor=north,
+        },
+        ylabel={Time (ms)},
+        every axis y label/.style={
+          at={(axis description cs:-0.15,0.5)},
+          rotate=90,
+          anchor=north,
+        },
+        legend style={at={(0.4,0.9)}},
+        ytick={0,5,...,100},
+        axis x line=bottom,
+        axis y line=left,
+        style={font=\scriptsize},
+        ]
+        
+        \addplot+[smooth,mark=none,red,line width=0.5pt] table
+          [x={n}, y={fft}
+          %select coords between index={1}{10}
+          ]
+            {\polymulone};
+        \addlegendentry{$\lambda = 128$};
+        
+        \addplot+[smooth,mark=none,blue,line width=0.5pt] table
+          [x={n}, y={fft}
+          %select coords between index={1}{10}
+          ]
+            {\polymultwo};
+        \addlegendentry{$\lambda = 256$};
+      \end{axis}
+    \end{tikzpicture}
+    \subcaption{$\Theta(n \log{n})$ multiplication with FFT.}\label{fig:polymul-fft}
+  \end{minipage}%
+  \caption{Times (in ms) of multiplication of two polynomials with degree $n
+  = 25$ to $2500$. There is clearly a huge gain by using FFT multiplication.}
+  \label{fig:polymul}
+\end{figure}

@@ -1,0 +1,120 @@
+%!TEX root = MSc_VM_Dissertation.tex
+
+% define extra colors
+\definecolor{lightergrey}{rgb}{0.68,0.67,0.68}
+\definecolor{grey}{rgb}{0.61,0.6,0.6}
+
+\newfontfamily\MyTitle[
+  Ligatures=TeX,
+  Extension=.ttf,
+  Path=Fonts/,
+  Scale=0.99,
+  BoldFont={NewsGotT Bold},
+  ItalicFont={NewsGoth Lt BT Light},
+  ItalicFeatures={FakeSlant},
+  AutoFakeSlant=0.2,
+  BoldItalicFeatures=FakeSlant, 
+]{NewsGotT Regular}
+
+
+{\MyTitle
+  \makeatletter
+  % set page margins
+  % left: 1in + 79mm
+  % right: 20mm - 1in
+  % top: 1in
+  % bottom: ?
+  \newgeometry{left=104.4mm,right=-5.4mm,top=25.4mm,bottom=-15.5mm,asymmetric}
+  \begin{titlepage}
+    \setcounter{page}{-1}
+    \thispagestyle{empty}
+    \input{Definitions/UMLogo}
+    
+    %% -----------------------------------------------------------------------
+    %% Page one
+    %% -----------------------------------------------------------------------
+    %Logo
+    \flushleft
+      \UMEng
+
+    {\flushleft
+      \vspace{5mm}
+      \textcolor{lightergrey}{\fontsize{15.2pt}{1em}{\textbf{\univname}} \\
+      \Large\facname} \\
+    }
+
+    {\flushleft
+      \vspace{38.1mm}
+      \textcolor{grey}{{\LARGE {\authornames}}} \\
+    }
+
+    {\flushleft
+      % put title in a 3cm box
+      \begin{minipage}[t][3cm]{\textwidth}
+        \begin{raggedright} % prevent hyphenation
+          \textcolor{grey}{{\LARGE \textbf{\@title}}} \\
+        \end{raggedright}
+      \end{minipage}
+    }
+
+    \vfill
+
+    {\flushleft
+      %\textcolor{grey}{\small\hoje} \\
+      \textcolor{grey}{\small Outubro de 2014} \\
+    }
+    \pagebreak
+    %% -----------------------------------------------------------------------
+    %% Page two
+    %% -----------------------------------------------------------------------
+    \thispagestyle{empty}
+    %Logo
+    \flushleft
+      \UMEng[grey]
+
+    {\flushleft
+      \vspace{5mm}
+      \textcolor{lightergrey}{\fontsize{15.2pt}{1em}{\textbf{\univname}} \\
+      \Large\facname} \\
+      \textcolor{lightergrey}{\Large \deptname} \\
+    }
+
+    {\flushleft
+      \vspace{32.3mm}
+      \textcolor{grey}{{\LARGE {\authornames}}} \\
+    }
+
+    {\flushleft
+      % put title in a 3cm box
+      \begin{minipage}[t][3cm]{\textwidth}
+        \begin{raggedright} % prevent hyphenation
+          \textcolor{grey}{{\LARGE \textbf{\@title}}} \\
+        \end{raggedright}
+      \end{minipage}
+    }
+
+    \vspace{43mm}
+    {\flushleft
+      \textcolor{grey}{\Large \docname}\\
+      \textcolor{grey}{\Large \mei}\\
+      \vspace{5mm}
+      \textcolor{grey}{\Large \orientedby}\\[2mm]
+      % put title in a 2cm box
+      \begin{minipage}[t][2cm]{\textwidth}
+        \begin{raggedright} % prevent hyphenation
+          \textcolor{grey}{\Large \textbf{\supname}}\\
+        \end{raggedright}
+      \end{minipage}
+    }
+    
+    \vfill
+    {\flushleft
+      %\textcolor{grey}{\small\hoje} \\
+      \textcolor{grey}{\small Outubro de 2014} \\
+    }
+    \pagebreak
+
+  \end{titlepage}
+}
+\restoregeometry
+\makeatother

@@ -1,0 +1,272 @@
+%% ---------------------------------------------------------------------------
+% BACKES-FIORE-REISCHUCK CONSTRUCTION
+%% ---------------------------------------------------------------------------
+\subsection{Backes-Fiore-Reischuk}\label{sec:bfr-scheme}
+Both \citescheme{catalano:fiore:2013} and \citescheme{gennaro:wichs:2012}
+schemes suffer from an inefficient verification algorithm. The time to execute
+\Vrfy is proportional to that of executing the program $\calP$, i.e.,
+evaluating the circuit $f$. \citeauthor{backes:fiore:reischuk:2013} solved this
+problem and additionally, they considered the case of performing computations
+over very large sets of inputs. In this case, besides the already mentioned
+requirements of security and efficiency, it is desirable to achieve
+\emph{input-independent efficiency}, meaning that verifying the correctness of
+a computation $f(\mSpace{1}{n})$ requires time \emph{independent} of input size
+$n$.  Additionally, two more crucial requirements should be achieved:
+\emph{unbounded storage}, meaning that the size of the outsourced data should
+not be fixed a-priori; and \emph{function independence}, meaning that a client
+should be able to outsource its data without having to know in advance what
+functions she will be delegating later.
+
+Input-independent efficiency is achieved in the amortized model: after a first
+computation with cost $|f|$, the client can verify every subsequent evaluation
+of $f$ in constant time. By fulfilling unbounded storage and function
+independence, outsourcing data and function delegation are completely
+decoupled: a client can continuously outsource data, and the delegated
+functions do not have to fixed a-priori.
+
+Their construction is also limited to support a restricted set of functions,
+namely arithmetic circuits of degree up to 2. However, even with this
+restricted set it is possible to compute a wide range of interesting
+statistical functions, like counting, summation, (weighted) average, arithmetic
+mean, standard deviation, variance, co-variance, weighted variance with
+constant weights, quadratic mean (RMS), mean squared error (MSE), the Pearson
+product-moment correlation coefficient, the coefficient of determination
+($R^2$), and the least squares fit of a data set $\{(x_i, v_i)\}^n_{i = 1}$.
+
+In the verification algorithm from both \citescheme{catalano:fiore:2013}
+constructions it is always necessary to compute $\rho
+= f(\setSpace{r}{\tau_1}{\tau_n})$. One way to accelerate this process would be
+to, after the first computation of $\rho$, to re-use it in order to verify
+other computations using $f$. However, this involves the re-use of labels,
+which is clearly forbidden by the security definition of
+\citescheme{catalano:fiore:2013}. The security of their scheme completely
+breaks down in the presence of label re-use.
+
+The proposed solution by \citeauthor{backes:fiore:reischuk:2013} to solve this
+critical problem involves two new ideas. The first one allows the partial, but
+safe, re-use of labels. This is accomplished with the introduction of
+multi-labels as previously defined. The other one is a new construction of
+a PRF that allows the pre-computation of a piece of label-independent
+information $\omega_f$ that can be re-used to efficiently compute $\rho$.
+%For the sake of space, the necessary theoretical definitions of such a PRF can
+%be found in \refappendix{app:bfr-defs}.
+
+\input{Chapters/_homo-macs-bfr-prf-defs}
+
+\paragraph*{Amortized Closed-Form Efficient PRF} Before introducing the
+description of \citescheme{backes:fiore:reischuk:2013} scheme, it is necessary
+to define this new and more efficient PRF, namely a PRF with amortized
+closed-form efficiency for \GroupEval. This PRF uses two generic PRFs which map
+binary strings to integers in $\bbZ_p$, and a weak PRF whose security relies on
+the Decision Linear assumption introduced by
+\textcite{boneh:boyen:shacham:2004}, and is presented below:
+\begin{definition}
+  Let $\calG$ bilinear group generator, and $\bgpp = (p, \bbG, \bbG_T, e, g)
+  \gets_\$ \calG(1^\lambda)$. Let $\tuple{g_0, g_1, g_2} \gets_\$ \bbG$ and
+  $\tuple{r_0, r_1, r_2} \gets_\$ \bbZ_p$ be chosen uniformly at random. The
+  advantage of a PPT adversary $\calA$ in solving the \emph{Decision Linear}
+  problem is
+  \begin{align}
+    \mathbf{Adv}^{DLin}_\calA(\lambda) = |&\Pr[\calA(\bgpp, g_0, g_1, g_2,
+    g_1^{r_1}, g_2^{r_2}, g_0^{r_1 + r2}) = 1] - \nonumber \\
+    & \Pr[\calA(\bgpp, g_0, g_1,
+    g_2, g_1^{r_1}, g_2^{r_2}, g_0^{r_0}] = 1|
+  \end{align}
+  The Decision Linear assumption holds for $\calG$ if for every PPT adversary
+  $\calA$ if $\mathbf{Adv}^{DLin}_\calA(\lambda) \leq \negl(\lambda)$.
+\end{definition}
+
+\paragraph*{Syntax}The syntax of an amortized closed-form efficient PRF is as
+follows:
+\begin{description}
+  \item[$\KeyGen(1^\lambda) \to (\pp, K)$: ] Let $\bgpp = (p, \bbG,
+    \bbG_T, e, g)$ be the description of bilinear groups $\bbG$ and $\bbG_T$
+    having the same prime order $p > 2^\lambda$ and such that $g \in \bbG$ is
+    a generator, and $\function{e}{\bbG \times \bbG}{\bbG_T}$ is an efficiently
+    computable bilinear map. Choose two seeds $K_1, K_2$ for a family of PRFs
+    $\function{\F'_{K_i}}{\{0,1\}^*}{\bbZ_p^2}$ for $i = 1,2$. Output
+    $K = (\bgpp, K_1, K_2)$ and $\pp = \bgpp$.
+  \item[$\F_K(x) \to R$:] Let $x = (\Delta, \tau) \in \calX$. To
+    compute $R \in \bbG$, generate $(u,v) \gets \F'_{K_1}(\tau)$ and
+    $(a,b) = \F'_{K_2}(\Delta)$, and output $R = g^{ua + vb}$.
+\end{description}
+The previous PRF is pseudo-random. The proof of the following theorem can be
+found in~\cite{backes:fiore:reischuk:2013}.
+
+\begin{theorem}\label{theo:amort-closed-form-prf}
+  If $\F'$ is a PRF and the Decision Linear assumptions holds for $\calG$, then
+  the function $(\tuple{\KeyGen, \F})$ presented above is a PRF.
+\end{theorem}
+
+\paragraph*{Amortized Closed-Form Efficiency for \GroupEval} The previously
+defined PRF satisfies amortized closed-form efficiency for $(\GroupEval,
+\vec{\mathsf{L}})$. Recall that $\function{\GroupEval}{f \times
+\bbG^n}{\bbG_T}$, with arithmetic circuit $\function{f}{\bbZ^n_p}{\bbZ_p}$ and
+$R_1, \dotsc, R_n \in \bbG$ random values. $\vec{\mathsf{L}}$ is a vector
+$(\mathsf{L}_1, \dotsc, \mathsf{L}_n)$ with each $\mathsf{L}_i = (\Delta,
+\tau_i) \in \calX$.
+\begin{description}
+  \item[$\CFEval^\off_{\GroupEval, \vec{\tau}}(K, f) \to \omega_f$:]
+    Let $K = (\bgpp, K_1, K_2)$ be a secret key generated by
+    $\KeyGen(1^\lambda)$ of a closed-form efficient PRF. Compute $\{(u_i, v_i)
+      \gets \F'_{K_1}(\tau_i)\}_{i=1}^{n}$ and set $\vec{\rho_i} = (0,
+      u_i, v_i)$. Basically, $\vec{\rho_i}$ are the coefficients of a degree-1
+      polynomial $\rho_i(x_1, x_2)$ in two unknown variables $x_1, x_2$. Then,
+      run $\PolyEval(2, f, \rho_1, \dotsc, \rho_n)$ to compute the coefficients
+      $\vec{\rho}$ of a polynomial $\rho(x_1, x_2)$ such that $\forall x_1, x_2
+      \in \bbZ_p \colon \rho(x_1, x_2) = f(\rho_1(x_1, x_2), \dotsc,
+      \rho_n(x_1, x_2))$. Output $\omega_f = \vec{\rho}$.
+  \item[$\CFEval^\on_{\GroupEval, \Delta}(K, \omega_f) \to W$:] Let $K
+    = (\bgpp, K_1, K_2)$ be a secret key and $\omega_f = \vec{\rho}$ the result
+    of the previous algorithm. Generate $(a,b) \gets \F'_{K_2}(\Delta)$,
+    and then use the coefficients $\vec{\rho}$ to compute $w = \rho(a,b)$.
+    Output $W = e(g, g)^w$.
+\end{description}
+
+\begin{theorem}
+  Let $\vec{\mathsf{L}} = (\mathsf{L}_1, \dotsc, \mathsf{L}_n)$ be such that
+  $\mathsf{L}_i = (\Delta, \tau_i) \in \calX$ and let $t$ be the running time
+  of $\GroupEval$. Then the PRF $(\KeyGen, \F)$, extended with the algorithms
+  $\CFEval^\off_{\GroupEval, \vec{\tau}}$ and $\CFEval^\on_{\GroupEval,
+  \Delta}$ satisfies \emph{amortized closed-form efficiency for $(\GroupEval,
+    \vec{\mathsf{L}})$} according to \refdef{def:amort-closed-form-eff-prf}, with running
+    times of $\calO(t)$ and $\calO(1)$ for $\CFEval^\off_{\GroupEval,
+      \vec{\tau}}$ and $\CFEval^\on_{\GroupEval, \Delta}$, respectively.
+  \label{theo:amort-closed-form-group-eval}
+\end{theorem}
+
+The proof can be found in \cite{backes:fiore:reischuk:2013}.
+
+\paragraph*{Homomorphic MAC with Efficient Verification} Having defined the PRF
+that allows to more efficiently compute the $\rho$ from the verification
+algorithm, we can now present the construction of an homomorphic MAC scheme
+with an efficient verification algorithm.
+
+\citescheme{backes:fiore:reischuk:2013} scheme works for circuits whose
+additive gates do not get inputs labeled by constants. And just like in the
+\citescheme{catalano:fiore:2013}, without loss of generality, one can use an
+equivalent circuit where there is a special variable/label for the value of 1,
+and the MAC of 1 can be published.  The description of the $\EVHMAC$
+construction is as follows:
+\begin{description}
+  \item[$\KeyGen(1^\lambda) \to (\ek, \sk)$:] Run $\bgpp \gets_\$
+    \calG(1^\lambda)$ to generate the description of bilinear groups with
+    $\bgpp = (p, \bbG, \bbG_T, e, g)$. The message space $\calM$ is $\bbZ_p$.
+    Choose a random value $\alpha \gets_\$ \bbZ_p$, and run $(K, \pp) \gets_\$
+    \KeyGen_(1^\lambda)$ to obtain seed $K$ of a PRF function
+    $\function{\mathsf{F}_K}{\{0,1\}^* \times \{0,1\}^*}{\bbG}$.  Output $\sk
+    = (\bgpp, \pp, K, \alpha)$ and $\ek = (\bgpp, \pp)$.
+  \item[$\Auth_\sk(\mathsf{L}, m) \to \sigma$:] Receives a multi-label
+    $(\Delta, \tau) \in (\{0,1\}^\lambda)^2$ and a message $m \in \calM$.
+    Compute $R \gets \mathsf{F}_K(\Delta, \tau)$ and set $y_0 = m$ and
+    $Y_1 = (R \cdot g^{-m})^{1/\alpha}$. Output the tag $(y_0, Y_1) \in \bbZ_p
+    \times \bbG$.
+
+    If we consider the $y_1 \in \bbZ_p$ to be the unique value such that
+    $Y_1 = g^{y_1}$, then $(y_0, y_1)$ are simply the coefficients of
+    a degree-1 polynomial $y(x)$ such that $y(0) = m$ and $y(\alpha)
+    = \phi_g^{-1}(R)$.
+  \item[$\Eval_\ek(f, \vec{\sigma} \to \sigma')$:] Receives a vector of
+    tags $\sigmaSpace{1}{n}$ and an arithmetic circuit
+    $\function{f}{\bbZ_p^n}{\bbZ_p}$. Just as in
+    \citescheme{catalano:fiore:2013} scheme, the values of $\sigma_i$'s are
+    not valid messages in $\bbZ_p$, and so it is necessary to specify the
+    sub-routine $\GateEval$.
+    At a given gate $f_g$, given two tags $\sigma_1, \sigma_2$, $\GateEval$
+    proceeds as follows:
+    \begin{description}
+      \item[$\GateEval_\ek(f_g, \sigma_1, \sigma_2) \to \sigma'$:] Let
+        $\sigma_i = (y_0^{(i)}, Y_1^{(i)}, \hat{Y}_2^{(i)}) \in \bbZ_p \times
+        \bbG \times \bbG_T$ for $i = 1,2$. Assume that $\hat{Y}_2^{(i)} = 1$
+        whenever it is not defined.
+
+        If $f_g = +$, then compute $(y_0, Y_1, \hat{Y}_2)$ as:
+        \begin{itemize}
+          \item $y_0 = y_0^{(1)} + y_0^{(2)}$
+          \item $Y_1 = Y_1^{(1)} \cdot Y_1^{(2)}$
+          \item $\hat{Y}_2 = \hat{Y}_2^{(1)} \cdot \hat{Y}_2^{(2)}$
+        \end{itemize}
+        If $f_g = \times$, then compute $(y_0, Y_1, \hat{Y}_2)$ as:
+        \begin{itemize}
+          \item $y_0 = y_0^{(1)} \cdot y_0^{(2)}$
+          \item $Y_1 = (Y_1^{(1)})^{y_0^{(2)}} \cdot
+            (Y_1^{(2)})^{y_0^{(1)}}$
+          \item $\hat{Y}_2 = e(Y_1^{(1)}, Y_1^{(2)})$
+
+        Since this construction assumes that $deg(f) \leq 2$, it can be assumed
+        that $\sigma_i = (\tuple{y_0^{(i)}, Y_1^{(i)}}) \in \bbZ_p \times \bbG$ for
+        $i = 1,2$.
+        \end{itemize}
+        If $f_g = \times$ and one of the two inputs is a constant $c \in
+        \bbZ_p$ (assume that $\sigma_2$ is the constant), then compute $(y_0,
+        Y_1, \hat{Y}_2)$ as:
+        \begin{itemize}
+          \item $y_0 = c \cdot y_0^{(1)}$
+          \item $Y_1 = (Y_1^{(1)})^c$
+          \item $\hat{Y}_2 = (\hat{Y}_2^{(1)})^c$
+        \end{itemize}
+    \end{description}
+    Return $\sigma' = (y_0, Y_1, \hat{Y}_2)$.
+  \item[$\Vrfy_\sk(m, \calP_\Delta, \sigma) \to \{\mathsf{accept},
+    \mathsf{reject}\}$:] Receives a message $m \in \calM$, a multi-labeled
+    program $\calP_\Delta = (f, \tauSpace{1}{n}), \Delta)$ and a tag
+    $\sigma = (y_0, Y_1, \hat{Y}_2)$. For $i = 1$ to $n$, compute $R_i
+    \gets \mathsf{F}_K(\Delta, \tau_i)$. Then run $W \gets
+    \GroupEval(f, \setSpace{R}{1}{n}) \in \bbG_T$, and check that both:
+    \begin{align*}
+      m & \equals y_0\\
+      W & \equals e(g,g)^{y_0} \cdot e(Y_1, g)^\alpha \cdot
+      (\hat{Y}_2)^{\alpha^2}
+    \end{align*}
+    If both checks are satisfied, output \textsf{accept}. Output
+    \textsf{reject} otherwise.
+\end{description}
+
+The previous verification algorithm is still not efficient. The description of
+$\EVHMAC$ needs to be complemented with \VrfyPrep and \EffVrfy to achieve
+efficient verification.
+\begin{description}
+  \item[$\VrfyPrep_\sk(\calP) \to \vk_\calP$:] Let $\sk = (\bgpp, \pp, K,
+    \alpha)$. Receives a labeled program $\calP = (f, \tauSpace{1}{n})$.
+    A concise verification key $\vk_\calP = \omega$ is computed, with $\omega
+    \gets \CFEval^\off_{\GroupEval, \vec{\tau}}(K, f)$.
+  \item[$\EffVrfy_{\sk, \vk_\calP}(\Delta, m, \sigma) \to \{\mathsf{accept},
+    \mathsf{reject}\}$:] Let $sk = (\bgpp, \pp, K, \alpha)$ and $\vk_\calP =
+    \omega$ and $\sigma = (\tuple{y_0, Y_1, \hat{Y}_2})$. First, run the online
+    closed-form efficient algorithm of \F for \GroupEval to compute $W \gets
+    \GroupEval^\on_{\GroupEval, \Delta}(K, \omega)$. Then, it runs the same
+    checks as in \Vrfy, and returns \textsf{accept} if both checks are
+    satisfied, \textsf{false} otherwise.
+\end{description}
+
+\paragraph*{Correctness} $\EVHMAC$ satisfies both authentication and evaluating
+correctness. The respective proofs can be found
+in~\cite{backes:fiore:reischuk:2013}.
+
+\paragraph*{Efficient Verification} $\EVHMAC$ satisfies efficient verification.
+\begin{theorem}
+  If $\F$ has amortized closed-form efficiency for $(\GroupEval,
+  \vec{\mathsf{L}})$, then $\EVHMAC$ satisfies efficient verification.
+  \label{theo:evh-mac-eff-vrfy}
+\end{theorem}
+The verification preparation $\VrfyPrep$ runs in time equal to
+$\CFEval^\off_{\GroupEval,\vec{\tau}}$, and the efficient verification
+$\EffVrfy$ runs in time equal to $\CFEval^\on_{\GroupEval, \Delta}$. From
+\reftheorem{theo:amort-closed-form-group-eval}, \VrfyPrep and \EffVrfy run in time
+$\calO(\abs{f})$ and $\calO(1)$, respectively. The full proof can be found
+in~\cite{backes:fiore:reischuk:2013}.
+
+\paragraph*{Security} The security of $\EVHMAC$ is based on the following
+theorem.
+\begin{theorem}
+  Let $\lambda$ be the security parameter, $\F$ be a PRF with security
+  $\epsilon_\F$, and $\calG$ be a bilinear group generator. Then, any PPT
+  adversary $\calA$ making $Q$ verification queries has at most probability
+  \begin{equation}\label{eq:evh-mac-sec}
+    \Pr[\mathsf{HomUF-CMA}_{\calA, \HMACML} = 1] \leq 2 \cdot \epsilon_\F
+    + \frac{8Q}{p-2(Q-1)}
+  \end{equation}
+  of breaking the security of $\EVHMAC$.
+  \label{theo:evh-mac-sec}
+\end{theorem}
+

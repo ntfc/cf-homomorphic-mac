@@ -1,0 +1,35 @@
+\begin{table}[htb]\small
+\centering
+{\renewcommand{\arraystretch}{0.93} %<- modify value to suit your needs
+\begin{tabular}{|r|r|rrrr|r|r|}
+\hline
+                                           &           & \multicolumn{1}{r}{\KeyGen}& \Auth                    & \Eval                   & \Vrfy      & Circuit                   & Tag Size   \\ 
+$n$                                        & $\lambda$ & \multicolumn{1}{r}{(ms)}   & \multicolumn{1}{r}{(ms)} & \multicolumn{1}{r}{(s)} & (ms)       & \multicolumn{1}{r|}{(ms)} & (kB)       \\ \hline
+% n = 12
+\multicolumn{1}{|r|}{\multirow{2}{*}{12}}  & 128       & 0.47                       & 0.17                     & 0.007                   & 0.22       & 0.59                      & 0.22       \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.33                       & 0.3                      & 0.012                   & 0.27       & 0.24                      & 0.45       \\ \hline
+% n = 30
+\multicolumn{1}{|r|}{\multirow{2}{*}{30}}  & 128       & 0.72                       & 0.36                     & 2.89                    & 46.75      & 47.63                     & 0.51       \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.74                       & 0.53                     & 4.49                    & 55.38      & 52.72                     & 1.02       \\ \hline
+% n = 35
+\multicolumn{1}{|r|}{\multirow{2}{*}{35}}  & 128       & 0.75                       & 0.43                     & 6.34                    & 100.42     & 97.53                     & 0.59       \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.85                       & 0.56                     & 10.72                   & 134.26     & 128.12                    & 1.18       \\ \hline
+% n = 40
+\multicolumn{1}{|r|}{\multirow{2}{*}{40}}  & 128       & 0.82                       & 1.09                     & 12.81                   & 198.60     & 201.63                    & 0.67       \\
+\multicolumn{1}{|r|}{}                     & 256       & 2.33                       & 0.99                     & 19.70                   & 227.37     & 229.74                    & 1.34       \\ \hline
+% n = 50
+\multicolumn{1}{|r|}{\multirow{2}{*}{50}}  & 128       & 1.44                       & 0.44                     & 23.92                   & 363.63     & 352.24                    & 0.83       \\
+\multicolumn{1}{|r|}{}                     & 256       & 2.09                       & 0.57                     & 36.93                   & 404.12     & 399.78                    & 1.66       \\ \hline
+\end{tabular}
+}
+\captionof{table}[CF1 performance]{CF1 Performance. Circuits computing the
+  polynomials used as examples in \citetool{parno:howell:gentry:raykova:2013}
+  of degree $n$. For each circuit, the \citescheme{catalano:fiore:2013} was
+  executed $N = 10$ times. The security parameter $\lambda$ is either 128 or
+  256 bits. The Circuit column refers to a circuit evaluation (as demonstrated
+  in \refsec{sec:circeval}) where the inputs are the original messages used in
+  \Auth. The Tag Size refers only to \citescheme{catalano:fiore:2013}1, since
+  that for \citescheme{catalano:fiore:2013}2 the tag size is always one group
+element of either 16 or 32 bytes for $\lambda$ of 128 or 256 bits,
+respectively.}\label{tab:cf-perf-pinocchio}
+\end{table}

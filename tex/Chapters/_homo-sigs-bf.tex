@@ -1,0 +1,204 @@
+%% ---------------------------------------------------------------------------
+% BONEH-FREEMAN CONSTRUCTION
+%% ---------------------------------------------------------------------------
+\subsection{Boneh-Freeman}\label{subsec:bf}
+\citescheme{boneh:freeman:2011} is the first homomorphic signature scheme that
+is capable of evaluating multivariate polynomials of bounded degree. All
+previous schemes focused solely on \emph{linear functions}, while their scheme
+allows the computation of various statistical functions like mean or standard
+deviation.
+%
+They also proposed an improved linear scheme with support for linear functions
+for small fields $\bbF_p$, specially for $p = 2$.
+
+Here we will present an overview of their two constructions. A more detailed
+description can be found in~\cite{boneh:freeman:2011}, as well as suitable
+parameters and sampling algorithms necessary for the full definition of the
+scheme. Both constructions rely on lattice-based techniques. They are build on
+the ``hash-and-sign'' signatures of
+\textcite{gentry:peikert:vaikuntanathan:2008}.
+
+Abstractly, in~\citescheme{gentry:peikert:vaikuntanathan:2008}, the public key
+is a lattice $\Lambda \subset \bbZ^\lambda$ and the secret key is a short basis
+of $\Lambda$. To sign a message $m$, the holder of the secret key hashes $m$ to
+an element $H(m) \in \bbZ^\lambda/\Lambda$ and samples a short vector $\sigma$
+from the coset of $\Lambda$ defined by $H(m)$. The verification of $\sigma$ is
+simply checking that $\sigma$ is short and that $\sigma \bmod{\Lambda} = H(m)$.
+
+\subsubsection*{Linearly homomorphic scheme}
+In a (linearly) homomorphic signature scheme, the message space is defined as
+$\bbF^\lambda_p$ and a function
+$\function{f}{(\bbF^\lambda_p)^n}{\bbF^\lambda_p}$ is encoded as
+$f(\mSpace{1}{n}) = \sum_{i = 1}^{n}c_i m_i$. The $c_i$ are integers in $(-p/2,
+p/2]$ and the description of $f$ is  $\langle f \rangle := (c_1, \dotsc, c_n)
+\in \bbZ^n$.
+%
+To authenticate both the message and the function, as well as binding them
+together, a single \citescheme{gentry:peikert:vaikuntanathan:2008} signature is
+computed that is simultaneously a signature on the (unhashed) message $m \in
+\bbF^\lambda_p$ and a signature on the hash of $\langle f \rangle$.
+
+Such signature is obtained by using the ``intersection method''.
+\textcite{boneh:freeman:2011} described it as follows. Let $\Lambda_1$ and
+$\Lambda_2$ be $\lambda$-dimensional integer lattices with $\Lambda_1
++ \Lambda_2 = \bbZ^\lambda$. Suppose $m \in \bbZ^\lambda/\Lambda_1$ is
+a message and $\function{\omega_\tau}{\bbZ^n}{\bbZ^\lambda/\Lambda_2}$ is
+a hash function, dependent of $\tau$, that maps encodings of functions $f$ to
+elements of $\bbZ^\lambda/\Lambda_2$.
+%
+Since $m$ defines a coset of $\Lambda_1$ in $\bbZ^\lambda$ and $\omega_\tau$
+defines a coset of $\Lambda_2$ in $\bbZ^\lambda$, by the \nom{CRT}{Chinese
+Remainder Theorem} the pair $(m, \omega_\tau(\langle f \rangle))$ defines
+a unique coset of $\Lambda_1 \cap \Lambda_2$ in $\bbZ^\lambda$. Then, a short
+vector $\sigma$ is computed with the property that $\sigma
+= m \bmod{\Lambda_1}$ and $\sigma = \omega_\tau(\langle f \rangle)
+\bmod{\Lambda_2}$. The vector $\sigma$ is a signature on $(\tau, m, \langle
+f \rangle)$ that ``binds'' $m$ and $\omega_\tau(\langle f \rangle)$ -- an
+attacker cannot generate a new short vector $\sigma'$ from $\sigma$ such that
+$\sigma = \sigma' \bmod{\Lambda_1}$ but $\sigma \neq \sigma' \bmod{\Lambda_2}$.
+
+In this linear scheme, $\bbF^\lambda_p \cong \bbZ^\lambda/\Lambda_1$ with the
+isomorphism given explicitly by the map $\vec{\mathrm{x}} \mapsto
+(\vec{\mathrm{x}} \bmod{\Lambda_1})$, and $\bbF^\ell_q \cong
+\bbZ^\lambda/\Lambda_2$.
+
+Using the above method, $\Sign_\sk(\tau, m, i)$ generates a signature on
+$(\tau, m, \langle \pi_i \rangle)$, where $\pi_i$ is the $i$th \emph{projection
+function} defined by $\pi_i(\mSpace{1}{n}) = m_i$ and encoded by $\langle \pi_i
+\rangle = \vec{\mathrm{e}}_i$, the $i$th unit vector in $\bbZ^n$.
+
+To authenticate the linear combination $m = \sum_{i = 1}^{n}c_i m_i$ previously
+authenticated, compute the signature $\sigma := \sum_{i = 1}^{n}c_i \sigma_i$.
+If $n$ and $p$ are sufficiently small, then $\sigma$ is a short vector. The
+following homomorphic property is achieved:
+\begin{align}
+  \sigma \bmod{\Lambda_1} &= \sum_{i = 1}^n c_i m_i = m, \text{and} \nonumber \\
+  \sigma \bmod{\Lambda_2} &= \sum_{i = 1}^n c_i \omega_\tau(\langle \pi_i
+  \rangle) = \sum_{i=1}^{n}c_i \omega_\tau(\vec{\mathrm{e}}_i).
+  \label{eq:bf-lin-homo-prop}
+\end{align}
+
+If $\omega_\tau$ is linearly homomorphic then $\sum_{i = 1}^n c_i
+\omega_\tau(\vec{\mathrm{e}}_i) = \omega_\tau\left( (c_1, \dotsc, c_n \right))$
+for all $c_i \in \bbZ$. Since $(c_1, \dotsc, c_n)$ is exactly the encoding
+$\langle f \rangle$, the signature $\sigma$ authenticates both the message $m$
+and the fact that $m$ is indeed the output of $f$ applied to the original
+messages $m_1, \dotsc, m_n$.
+
+Verification of a signature $\sigma$ is simply checking that
+\begin{align}
+  \sigma \bmod{\Lambda_1} & \equals m, \nonumber \\
+  \sigma \bmod{\Lambda_2} & \equals \omega_\tau(\langle f \rangle).
+  \label{eq:bf-lin-vrfy}
+\end{align}
+
+\paragraph*{Correctness} The above linearly homomorphic scheme satisfies both
+authentication and evaluation correctness. The proofs can be found
+in~\cite{boneh:freeman:2011}.
+
+\paragraph*{Unforgeability} The security is based on the \nomsf{SIS}{Small
+Integer Solution} problem on $q$-ary lattices for some prime $q$. More
+precisely, for security parameter $\lambda$ it follows:
+\begin{theorem}\label{theo:bf-lin-uf}
+  If $\mathsf{SIS}_{q, \lambda, \beta}$ is infeasible for a suitable $\beta$,
+  then the above linearly homomorphic scheme is unforgeable in the random
+  oracle model.
+\end{theorem}
+
+To prove it, it is shown that a successful forger can be used to solve the
+\textsf{SIS} problem in the lattice $\Lambda_2$, which for random $q$-ary
+lattices (and suitable parameters) is as hard as standard worst case lattice
+problems. The full proof and the suitable parameters can be found
+in~\cite{boneh:freeman:2011}.
+
+\paragraph*{Privacy} The above linearly homomorphic signature scheme is weakly
+context hiding. Based on the fact that the distribution of a linear combination
+of samples from a discrete Gaussian is itself a discrete Gaussian, it is proved
+that a derived signature on a linear combination $m' = \sum_{i = 1}^{n} c_i
+m_i$ depends (up to negligible distance) only on $m'$ and the $c_i$, and not on
+the original messages $m_i$. The full proof can be found
+in~\cite{boneh:freeman:2011}.
+
+\paragraph*{Length efficiency} The bit length of a derived signature only
+depends logarithmically on the size of the data set. The proof, along with the
+exact length of a derived signature, can be found in~\cite{boneh:freeman:2011}.
+
+\subsubsection*{Polynomially homomorphic scheme}
+The basic idea for this scheme is as follows: what if $\bbZ^\lambda$ has a ring
+structure and lattices $\Lambda_1, \Lambda_2$ are ideals? Then the maps
+$\vec{\mathrm{x}} \mapsto \vec{\mathrm{x}} \bmod{\Lambda_i}$ are ring
+homomorphisms, and therefore adding or multiplying signatures corresponds to
+adding or multiplying the corresponding messages or functions. Since any
+polynomial can be computed by repeated additions and multiplications, by adding
+this structure to the previous scheme it is possible to authenticate polynomial
+functions on messages.
+
+Let $F(x) \in \bbZ[x]$ be a monic, irreducible polynomial of degree $\lambda$
+and let $R$ be the ring $\bbZ[x]/(F(x))$. $R$ is isomorphic to $\bbZ^\lambda$
+and ideals in $R$ correspond to integer lattices in $\bbZ^\lambda$ under the
+``coefficient embedding''. This embedding maps a polynomial in $R$ to an
+element in an ideal lattice as follows: if $g(x) = g_0 + g_1 x + \cdots
++ g_{\lambda-1} x^{\lambda - 1}$, then coefficient embedding can be defined as:
+$g(x) \mapsto (g_0, \dotsc, g_{\lambda-1}) \in \bbZ^\lambda$.
+
+$\Lambda_1$ and $\Lambda_2$ are specially chosen to be degree one prime ideals
+$\mathfrak{p,q} \subset R$ of norm $p, q$ respectively, with $\mathfrak{p}
+= (p, x - a), \mathfrak{q} = (q, x - b)$. $R/\mathfrak{p}$ and $R/\mathfrak{q}$
+are isomorphic with $\bbF_p$ and $\bbF_q$, respectively. The message space is
+defined by $\bbF_p$. \Sign is now exactly as in the linearly homomorphic
+scheme, and it returns a short signature $\sigma \in R$.
+
+When considering polynomial functions on $\bbF_p[x_1, \dotsc, x_n]$, the
+projection functions $\pi_i$ are exactly the linear monomials $x_i$, and any
+polynomial function can be obtained by adding and multiplying monomials.  If an
+ordering on all monomials of the form $x_1^{e_1} \cdots x_n^{e_n}$ is fixed,
+then it is possible to encode any polynomial function as its vector of
+coefficients, with the $i$-th unit vector $\vec{\mathrm{e}}_i$ representing the
+linear monomials $x_i$ for $i = 1, \dotsc, n$.
+
+The hash function $\omega_\tau$ is defined exactly as in the linear scheme: for
+a function $f$ in $\bbF_p[x_1, \dotsc, x_n]$ encoded as $\langle f \rangle
+= (c_1, \dotsc, c_\ell) \in \bbZ^\ell$, define a polynomial $\hat{f} \in
+\bbZ[x_1, \dotsc, x_n]$ that reduces to $f \bmod{p}$. Then,
+$\omega_\tau(\langle f \rangle) = \hat{f}(\alpha_1, \dotsc, \alpha_n)$ where
+each $\alpha_i \in \bbF_q$ is the output of the hash function $H(\tau || i)$.
+
+The evaluation algorithm uses the lifting of $f$ to $\hat{f}$.  Given $f$ and
+the signatures $\sigmaSpace{1}{n} \in R$ on messages $m_1, \dotsc, m_n \in
+\bbF_p$, the signature on $f(m_1, \dotsc, m_n)$ is given by
+$\hat{f}(\sigmaSpace{1}{n})$.
+%
+It returns a short signature $\sigma \in R$ on triple $(\tau, m, \langle
+f \rangle)$ such that $\sigma = m \bmod{\mathfrak{p}}$ and $\sigma
+= \omega_\tau(\langle f \rangle) \bmod{\mathfrak{q}}$. Let $\sigma_i$ be
+a signature on $(\tau, m_i, \langle f_i \rangle)$ for $i = 1, 2$. The following
+homomorphic properties can be observed:
+\begin{align}
+  \sigma_1 + \sigma_2 & \text{ is a signature on } (\tau, m_1+m_2, \langle f_1
+  + f_2 \rangle) \nonumber \\
+  \sigma_1 \cdot \sigma_2 & \text{ is a signature on } (\tau, m_1 \cdot m_2, \langle f_1
+  \cdot f_2 \rangle)
+  \label{eq:bf-poly-homo-prop}
+\end{align}
+
+The verification is essentially the same as in the linearly homomorphic scheme.
+
+\paragraph*{Correctness} The above scheme satisfies both authentication and
+evaluation correctness properties. Proof can be found
+in~\cite{boneh:freeman:2011}.
+
+\paragraph*{Unforgeability} To prove that the above scheme is unforgeable, it
+is shown that a successful forger can be used to find a solution to the
+\nom{SIVP}{Shortest Independent Vectors Problem} in the lattice $\Lambda_2$,
+which in this scheme is the ideal $\mathfrak{q}$.
+
+\paragraph*{Privacy} For large $p$, this homomorphic scheme is not weakly
+context hiding as defined in \refdef{def:hsig-priv}.
+In~\cite{boneh:freeman:2011} is is shown exactly why the signature $\sigma$
+leaks information about the original messages $m_0, m_1$.
+
+\paragraph*{Length efficiency} The bit length of a derived signature only
+depends logarithmically on the size of the data set, for polynomials of bounded
+constant degree and for small coefficients. The proof, along with the exact
+length of a derived signature, can be found in~\cite{boneh:freeman:2011}.
+

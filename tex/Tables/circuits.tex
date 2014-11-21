@@ -1,0 +1,47 @@
+\begin{table}[htb]\footnotesize
+  \centering
+  \begin{minipage}[b]{.6\linewidth}
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+      \hline
+      $n$  & Inputs & Coeffs   & Muls    \\\hline
+      10   & 13     & 24       & 128     \\\hline
+      20   & 25     & 53       & 545     \\\hline  
+      50   & 66     & 129      & 3472    \\\hline  
+      100  & 127    & 307      & 16178   \\\hline  
+    \end{tabular}
+    %
+    \begin{tabular}{|c|c|c|c|c|}
+      \hline
+      $n$  & Inputs & Coeffs   & Muls    \\\hline
+      125  & 149    & 312      & 19766   \\\hline  
+      150  & 186    & 378      & 29075   \\\hline  
+      200  & 269    & 532      & 55473   \\\hline  
+      300  & 372    & 741      & 112195  \\\hline  
+    \end{tabular}
+    \subcaption{Average dimensions of the circuits computing our randomly
+    generated polynomials of degree $n$.}
+  \end{minipage}%
+  \begin{minipage}[b]{.4\linewidth}
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+      \hline
+      $n$ & Inputs & Coeffs   & Muls    \\\hline
+      12  & 4      & 247      & 186     \\\hline  
+      30  & 6      & 16807    & 55250   \\\hline  
+      35  & 6      & 32768    & 110624  \\\hline  
+      40  & 6      & 131022   & 203428  \\\hline  
+      50  & 6      & 500040   & 350042  \\\hline  
+    \end{tabular}%
+    \subcaption{Dimensions of the example circuits of degree $n$ included with
+      \citetool{parno:howell:gentry:raykova:2013}.}
+  \end{minipage}%
+  \captionof{table}[Arithmetic circuits' dimensions]{Dimensions of our randomly
+    generated circuits and from \citetool{parno:howell:gentry:raykova:2013}'s
+    polynomial examples. \citetool{parno:howell:gentry:raykova:2013}'s
+    polynomials are of lower degree, but have much more coefficients and
+    multiplications than ours.}\label{tab:circuits}
+  %\captionof{table}[Arithmetic circuits' average dimensions.]{Average number of
+  %inputs and product gates of the randomly generated circuits, where for
+  %each polynomial of degree $n$ we have 100 circuits.}\label{tab:circuits} 
+\end{table}

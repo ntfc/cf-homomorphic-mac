@@ -1,0 +1,232 @@
+%% ---------------------------------------------------------------------------
+% CATALANO-FIORE CONSTRUCTION
+%% ---------------------------------------------------------------------------
+\subsection{Catalano-Fiore}These constructions only support a restricted set of functions. More precisely,
+they support polynomials $\{f_n\}$ over $\bbF$ which have \emph{polynomially
+bounded degree}, meaning that both the number of variables and the degree of
+$f_n$ are bounded by some polynomial $p(n)$. The class $\mathcal{VP}$ contains
+all polynomially bounded degree families of polynomials that are defined by
+arithmetic circuits of polynomial size and degree.
+
+\subsubsection*{Homomorphic MAC from OWFs}
+The security of this construction relies only on a \nom{PRF}{Pseudo-Random
+Function} (and thus on \nom{OWF}{One-Way Function}s). It is very simple and
+efficient, and allows the homomorphic evaluation of circuits
+$\function{f}{\bbZ^n_p}{\bbZ_p}$ for a prime $p$ of roughly $\lambda$ bits.
+
+This construction is restricted to circuits whose additive gates do not get
+inputs labeled by constants. Without loss of generality, and when needed, one
+can use an equivalent circuit where there is a special variable/label for the
+value of 1, and the MAC of 1 can be published.
+
+The description of the scheme (which we will refer to as
+\citescheme{catalano:fiore:2013}1) with security parameter $\lambda$ is as
+follows:
+\begin{description}
+  \item[$\KeyGen(1^\lambda) \to (\ek, \sk)$.] Let $p$ be a prime of
+    roughly $\lambda$ bits. Choose a seed $K \gets_\$ \{0, 1\}^\lambda$ of
+    a PRF function $ \function{F_K}{\{0, 1\}^*}{\bbZ_p} $ and a random value
+    $\alpha \gets_\$ \bbZ_p$. Output $\ek = p$ and $\sk = (K, \alpha)$.
+    The message space $\calM$ is defined as $\bbZ_p$.
+  \item[$\Auth_\sk(\tau, m) \to \sigma$.] To authenticate a message $m
+    \in \bbZ_p$ with label $\tau \in \{0, 1\}^\lambda$, compute $r_\tau
+    = F_K(\tau)$, set $y_0 = m$, $y_1 = (r_\tau - m)/\alpha \bmod{p}$ and output
+    $\sigma = (y_0, y_1)$. $y_0, y_1$ are the coefficients of a degree-1
+    polynomial $y(x)$, where $y(0)$ evaluates to $m$ and $y(\alpha)$ evaluates to
+    $r_\tau$.
+    
+    In this construction, tags $\sigma$ will be interpreted as polynomials
+    $y \in \bbZ_p[x]$ of degree $d \geq 1$ in some (unknown) variable
+    $x$, i.e., $y(x) = \sum_i{y_i x^i}$ (the value of $d$ is increased by
+    successive calls to \Eval).
+  \item[$\Eval_\ek(f, \vec{\sigma}) \to \sigma'$.] Receives an
+    arithmetic circuit $\function{f}{\bbZ^n_p}{\bbZ_p}$ and a vector of tags
+    $\vec{\sigma} = (\sigmaSpace{1}{n})$. Basically, \Eval consists in
+    evaluating the circuit $f$ on the tags $\vec{\sigma}$ instead of evaluating
+    it on messages. But since the values of $\sigma_i$'s are not valid messages
+    in $\bbZ_p$, but rather polynomials in $\bbZ_p[x]$, it is necessary to
+    specify how the evaluation should be done.
+
+    \Eval proceeds gate-by-gate, and at each gate $g$, given two tags
+    $\sigma_1, \sigma_2$ (or a tag $\sigma_1$ and a constant $c \in \bbZ_p$),
+    it runs the sub-routine $\sigma' \gets \GateEval_\ek(g, \sigma_1,
+    \sigma_2)$ that returns a new tag $\sigma'$, which is then passed as input
+    to the next gate in the circuit.  When the last gate of the circuit is
+    reached, \Eval outputs the tag vector $\sigma'$ obtained by running
+    \GateEval on the last gate.  \GateEval is described as follows:
+    \begin{description}
+      \item[$\GateEval_\ek(g, \sigma_1, \sigma_2) \to \sigma'$:] Let
+        $\sigma_i = \vec{y}^{(i)} = (\setSpace{y^{(i)}}{0}{d_i})$ for $i = 1,2$
+        and $d_i \geq 1$.
+
+        If $g = +$, then:
+        \begin{itemize}
+          \item let $d = \max(d_1, d_2)$. It is assumed that $d_1 \geq d_2$, so
+            $d = d_1$.
+          \item Compute the coefficients $(\setSpace{y}{0}{d})$ of the
+            polynomial $y(x) = y^{(1)}(x) + y^{(2)}(x)$. This can be done
+            efficiently by adding the two vectors of coefficients such that
+            $\vec{y} = \vec{y}^{(1)} + \vec{y}^{(2)}$ ($\vec{y}^{(2)}$ is
+            eventually padded with zeros in positions $d_1 \dotsc d_2$).
+        \end{itemize}
+        If $g = \times$, then:
+        \begin{itemize}
+          \item let $d = d_1 + d_2$.
+          \item Compute the coefficients $(\setSpace{y}{0}{d})$ of the
+            polynomial $y(x) = y^{(1)}(x) * y^{(2)}(x)$ using the convolution
+            operator $*$, i.e., $\forall j = \interval{0}{d} : y_j
+            = \sum_{i=0}^{j}{y_i^{(1)} \cdot y_{j-i}^{(2)}}$.
+        \end{itemize}
+        If $g = \times$ and one of the inputs\footnote{Usually, $\sigma_2$ is the
+        constant.} is a constant $c \in \bbZ_p$, then:
+        \begin{itemize}
+          \item let $d = d_1$.
+          \item Compute the coefficients $(\setSpace{y}{0}{d})$ of the
+            polynomials $y(x) = c \cdot y^{(1)}(x)$.
+        \end{itemize}
+        Finally, \GateEval returns $\sigma' = (\setSpace{y}{0}{d})$. The size
+        of a tag grows only after the evaluation of a $\times$ gate (where both
+        inputs are not constants). After the evaluation of a circuit $f$, it
+        holds that $|\sigma'| = \deg(f) + 1$.
+    \end{description}
+    
+  \item[$\Vrfy_\sk(m, \calP, \sigma) \to \{\mathsf{accept, reject}\}$.]
+    Let $\calP = f(\tauSpace{1}{n})$ be a labeled program , $m \in \bbZ_p$ and
+    $\sigma = (\setSpace{y}{0}{d})$ be a tag for some $d \geq 1$.  Verification
+    is done as follows:
+    \begin{itemize}
+      \item If $y_0 \neq m$, then output \textsf{reject}. Otherwise, continue.
+      \item For every input wire of $f$ with label $\tau$ compute $r_\tau
+        = F_K(\tau)$. Then compute $\rho = f(\setSpace{r}{\tau_1}{\tau_n})$,
+        and use $\alpha$ to check if
+        \begin{equation}\label{eq:cf-1-vrfy}
+          \rho \equals \sum_{i=0}^{d}{y_i \alpha^i}
+        \end{equation}
+        If this is true, then output \textsf{accept}. Otherwise, output
+        \textsf{reject}\footnote{If using an identity program $\calI_\tau$, the
+        \Vrfy just checks that $r_\tau = y_0 + y_1 \cdot \alpha$ and $y_0
+        = m$.}.
+    \end{itemize}
+\end{description}
+
+\paragraph*{Efficiency} The generation of a tag with \Auth is extremely
+efficient as it only requires one PRF evaluation (e.g., one AES evaluation).
+
+\Eval's complexity mainly depends on the cost of evaluating the circuit $f$,
+and the additional overhead due the \GateEval sub-routine and to that the tag's
+size grows with the degree of the circuit. With a circuit of degree $d$, in the
+worst case, this overhead is going to be $\calO(d)$ for addition gates, and
+$\calO(d \log{d})$ for multiplication gates\footnote{Algorithms based on
+  \nom{FFT}{Fast Fourier Transform} can be used to efficiently compute the
+  convolution. See \refchapter{chap:algebraic} for details.}
+
+The cost of \Vrfy is basically the cost of computing $\rho$ plus the cost of
+computing $\sum_{i=0}^{d}{y_i \alpha^i}$, or $\calO(|f| + d)$.
+
+\paragraph*{Correctness} Essentially, correctness follows from the special
+property of the tags generated by \Auth, i.e., that $y(0) = m$ and $y(\alpha)
+= r_\tau$. In particular, this property is preserved when evaluating the
+circuit $f$ over tags $\sigma_1, \dotsc, \sigma_n$.
+
+\paragraph*{Security} The security of this scheme is based on the following
+theorem.
+\begin{theorem}
+  If $F$ is a PRF, then the previously defined homomorphic MAC scheme is secure.
+  \label{first-scheme-sec}
+\end{theorem}
+
+\subsubsection*{Compact Homomorphic MAC}
+In \citescheme{catalano:fiore:2013}1, the tags' size grows linearly with the
+degree of the evaluated circuit. This may be acceptable in some cases, e.g.,
+circuits evaluating constant-degree polynomials, but it may become impractical
+in other situations, e.g., when the degree is greater that the input size of
+the circuit.
+
+To overcome this problem, a second scheme (\citescheme{catalano:fiore:2013}2)
+was proposed by \citeauthor{catalano:fiore:2013} that is almost as efficient as
+the previous one. An interesting property of this second scheme is that the
+tags are now of constant size. But to achieve this a few restrictions arise.
+First, there is a fixed a-priori bound $D$ on the degree of allowed circuits.
+Second, the homomorphic evaluation has to be done in a ``single shot'' i.e.,
+the authentication tags obtained from \Eval cannot be used again to compose
+with other tags.
+
+Because of these restrictions, another interesting property, \emph{local
+composition}, is achieved. With this, one can keep a locally non-succinct
+version of the tag that allows for arbitrary composition. Later, when it comes
+to send an authentication tag to the verifier, one can securely compress such
+non-succinct tag in a compact one of constant-size.
+
+Besides a PRF, the security of this scheme relies on a re-writing of the
+\emph{$\ell$-Diffie-Hellman Inversion} problem. Basically, the definition of
+$\ell$-Diffie-Hellman Inversion is that one cannot compute $g^{x^{-1}}$ given
+$g, g^\alpha, \dotsc, g^{\alpha^D}$.  The re-write for this scheme states that
+one cannot compute $g$ given values $g^\alpha, \dotsc, g^{\alpha^D}$.
+
+The description of the scheme (which we refer to as
+\citescheme{catalano:fiore:2013}2) with security parameter $\lambda$ is as
+follows:
+\begin{description}
+  \item[$\KeyGen(1^\lambda, D) \to (\ek, \sk)$: ] Let $D
+    = \poly(\lambda)$ be an upper-bound so that the scheme supports circuits of
+    degree at most $D$. Generate a group $\bbG$ of order $p$ where $p$ is
+    a prime of roughly $\lambda$ bits, and choose a random generator $g
+    \gets_\$ \bbG$. Choose a seed $K$ of a PRF $\function{F_K}{\{0,
+    1\}^*}{\bbZ_p} $ and a random value $\alpha \gets_\$ \bbZ_p$. For $i
+    = \interval{1}{D}$ compute $h_i = g^{\alpha^i}$. Output $\ek
+    = (\setSpace{h}{1}{D})$ and $\sk = (K, g, \alpha)$. The message space is
+    defined as $\bbZ_p$.
+  \item[$\Auth_\sk(\tau, m) \to \sigma$: ] This algorithm is exactly
+    the same as the one from the previous construction. Returns a tag $(y_1,
+    y_2) \in \bbZ_p^2$.
+  \item[$\Eval_\ek(f, \vec{\sigma}) \to \sigma'$: ] Takes as input an
+    arithmetic circuit $\function{f}{\bbZ^n_p}{\bbZ_p}$ and a vector of tags
+    $\vec{\sigma} = (\sigmaSpace{1}{n})$ such that each $\sigma_i \in \bbZ_p^2$
+    (i.e., it is a constant-sized tag for a degree-1 polynomial).  First,
+    proceed exactly as in the first scheme to obtain the coefficients
+    $(\setSpace{y}{0}{d})$. If $d = 1$ then return $\sigma = (y_0, y_1)$.
+    Otherwise, compute $\Lambda = \prod_{i=1}^d{h_i ^{y_i}}$ and return $\sigma
+    = \Lambda$.
+  \item[$\Vrfy_\sk(m, \calP, \sigma) \to \{\mathsf{accept},
+    \mathsf{reject}\}$: ] Let $\calP = (f, \tauSpace{1}{n})$ be a labeled
+    program, $m \in \bbZ_p$ and $\sigma$ be a tag of either the form $(y_0,
+    y_1) \in \bbZ_p^2$ or $\Lambda \in \bbG$.  First, proceed as in the first
+    scheme to compute $\rho$ (i.e., evaluate the circuit with inputs
+    $(\setSpace{r}{\tau_1}{\tau_n})$). If $\calP$ computes a polynomial of
+    degree 1, then proceed exactly as in the first scheme. Otherwise, use $g$
+    to check whether the following holds:
+    \begin{equation}\label{eq:cf-2-vrfy}
+      g^\rho \equals g^m \cdot \Lambda
+    \end{equation}
+    If everything is satisfied, then output \textsf{accept}. Otherwise, output
+    \textsf{reject}.
+\end{description}
+
+\paragraph*{Efficiency} This scheme is practically as efficient as
+\citescheme{catalano:fiore:2013}1. Both the tagging and verification algorithms
+have exactly the same complexity. In the evaluation, the complexity is still
+dominated by the cost of evaluating the circuit and the cost of the sub-routine
+\GateEval.
+
+\paragraph*{Correctness} Correctness is achieved much like as in
+\citescheme{catalano:fiore:2013}1. Additionally, the
+\refequation{eq:cf-2-vrfy} is essentially the same as checking that $\rho
+\equals \sum_{i=0}^d y_i \alpha^i$, which is the same as
+\refequation{eq:cf-1-vrfy}.
+
+\paragraph*{Security} The security of this scheme is based on the following
+theorem.
+\begin{theorem}
+  If $F$ is a PRF and the $(D-1)$-Diffie Hellman Inversion Assumption holds in
+  $\bbG$, then the previously defined homomorphic MAC scheme is secure.
+  \label{theo:cf-2-sec}
+\end{theorem}
+
+\paragraph*{Local composition} As it was already mentioned,
+\citescheme{catalano:fiore:2013}2 introduces local composition. This allows us
+to locally keep the large version of the tag (the polynomial $y$ with its $d
++ 1$ coefficients), but the compact version $\Lambda$ is the one that is sent
+to the verifier. By keeping this large $y$, it is possible to have composition
+as in the previous scheme. This is particularly interesting for applications
+where not too many parties are involved, as it allows for succinct tags and
+local composition of partial computations at the same time.

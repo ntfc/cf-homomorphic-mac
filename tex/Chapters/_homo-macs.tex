@@ -1,0 +1,592 @@
+%% ---------------------------------------------------------------------------
+% HOMOMORPHIC MACS
+%% ---------------------------------------------------------------------------
+\section{Homomorphic MACs}\label{subsec:def-hmac}
+The symmetric analogue of homomorphic signatures are homomorphic MACs.
+%
+Basically, Alice has a secret key which is used to generate a tag $\sigma$ that
+authenticates a message $m$ under label $\tau$. Given a labeled program $\calP
+= (f, \tauSpace{1}{n})$ and a set of tags $\sigmaSpace{1}{n}$, anyone can
+execute the homomorphic evaluation algorithm over $\calP(\sigmaSpace{1}{n})$ to
+generate a short tag $\sigma'$ that authenticates $m' = \calP(\mSpace{1}{n})$
+as the output of the $\calP$ executed over inputs labeled by $\tauSpace{1}{n}$,
+respectively.
+
+There are three main properties that a homomorphic MAC scheme is required to
+satisfy.%
+\begin{inparaenum}[(1)]
+\item It must be \emph{secure}, i.e., an adversary that asks for tags
+  authenticating some messages of his own choice should not be able to produce
+  valid tags authenticating messages that are not obtained as the output of
+  $\calP$.
+\item It should be \emph{succinct}, i.e., the output of $\calP$ can be
+  certified using much less communication that than of sending the original
+  authenticated messages.
+\item Lastly, it should be \emph{composable} meaning that tags authenticating
+  previous outputs of $\calP$ should be usable as inputs to further
+  authenticate new computations, i.e., the tag authenticating the output of
+  $\calP$ can be used as one of the inputs of another labeled program $\calP'$.
+\end{inparaenum}
+
+However, unlike in homomorphic signatures, it is necessary to explain what it
+really means to authenticate a message as the output of a labeled program.
+%
+In a scenario where many users share the secret key and authenticate various
+data-items without keeping any local or joint state, it is necessary to specify
+which data is being authenticated and which data the program $\calP$ should be
+evaluated on.
+%
+With this in mind, \textcite{gennaro:wichs:2012} defined the concept of
+\emph{labeled programs}\footnote{\citeauthor{gennaro:wichs:2012} defined
+labeled programs for boolean circuits $\function{f}{\{0, 1\}^n}{\{0,1\}}$, but
+here we will consider the case for arithmetic circuits
+$\function{f}{\bbF^n}{\bbF}$ where $\bbF$ is some finite field, like $\bbZ_p$
+for some prime $p$.}.
+
+\paragraph*{Labeled Programs} \emph{Labels} are used to index some data.
+A labeled program $\calP = (f, \tauSpace{1}{n})$ consists of
+a circuit\footnote{Or function.} $\function{f}{\bbF^n}{\bbF}$  and a distinct
+input label $\tau_i \in \{0,1\}^\lambda$ for each input wire $i \in
+\{\interval{1}{n}\}$ of the circuit. This can be seen as way to give useful
+names to the variables of a program, without knowing the input values -- as an
+example, we can consider a program that outputs the average salaries of
+a company, and each $\tau_i$ can be of the form ``salary of worker $i$''.
+%
+A message $m$ is then authenticated with respect to a label $\tau$, and the
+value of the label does not need to have any meaningful semantics. This
+label-message association basically means that the value $m$ can be assigned to
+those input variables of a labeled program $\calP$ whose label is $\tau$.
+However, with this definition, a label \emph{cannot} be re-used for multiple
+messages, i.e., two distinct messages $m, m'$ cannot be authenticated with
+respect to the same label $\tau$. 
+
+Given some labeled programs $\setSpace{\calP}{1}{t}$ and a circuit
+$\function{g}{\bbF^t}{\bbF}$, the \emph{composed program} $\calP^*
+= g(\setSpace{\calP}{1}{t})$ consists in evaluating a circuit $g$ on the
+outputs of $\setSpace{\calP}{1}{t}$. The labeled inputs of the composed program
+$\calP^*$ are just all the \emph{distinct} labeled inputs of
+$\setSpace{\calP}{1}{t}$, and all the input wires with the same label are put
+together in a single input wire.  The \emph{identity program} with label $\tau$
+is denoted by $\calI_\tau := (g_{\id}, \tau)$, where $g_{\id}$ is the
+\emph{canonical identity circuit} and $\tau \in \{0, 1\}^\lambda$ is some input
+label. Any program $\calP = (f, \tauSpace{1}{n})$ can be written as
+a composition of programs $\calP = f (\setSpace{\calI}{\tau_1}{\tau_n})$.
+
+Given a labeled program $\calP = (f, \tauSpace{1}{n})$ and a set of tags
+$\sigmaSpace{1}{n}$ that authenticates messages $m_i$ under label $\tau_i$
+, anyone can run the homomorphic evaluation algorithm that takes an input the
+tuple $(\calP, \sigmaSpace{1}{n})$ and whose output $\sigma'$ will authenticate
+$m'$ as the output of $\calP(\mSpace{1}{n})$\footnote{To be more precise,
+$\sigma'$ only certifies $m'$ as the output of a specific program $\calP$.}.
+Then the secret-key verification algorithm takes as input the triple $(m',
+\calP, \sigma')$ and verifies that $m'$ is indeed the output of the program
+$\calP$ executed over some previously authenticated and labeled data, without
+knowing the value of the original data.
+
+\begin{definition}\label{def:hmac}
+  A \emph{homomorphic message authenticator scheme} $\HMAC$ is a tuple of PPT
+  algorithms (\KeyGen, \Auth, \Vrfy, \Eval), where $\calM$ defines a message
+  space, as follows:
+  \begin{description}
+    \item[$\KeyGen(1^\lambda) \to (\ek, \sk)$:] Takes a security
+      parameter $\lambda$. Outputs a public evaluation key \ek and a secret key
+      \sk.
+    \item[$\Auth_\sk(\tau, m) \to \sigma$:] Receives an input-label
+      $\tau \in \{0, 1\}^\lambda$ and a message $m \in \calM$, and outputs a tag
+      $\sigma$.
+    \item[$\Vrfy_\sk(m, \calP, \sigma) \to \{\mathsf{accept},
+      \mathsf{reject}\}$:] Receives a message $m \in \calM$, a labeled program
+      $\calP = (f, \discretionary{}{}{}\tauSpace{1}{n})$ and a tag $\sigma$,
+      and outputs either \textsf{accept} or \textsf{reject}.
+    \item[$\Eval_\ek(f, \vec{\sigma}) \to \sigma'$: ] Receives
+      a circuit $\function{f}{\calM^n}{\calM}$ and a vector of tags
+      $\vec{\sigma} = (\sigmaSpace{1}{n})$ , and outputs a new tag $\sigma'$.
+  \end{description}
+\end{definition}
+
+A homomorphic MAC scheme must achieve the following properties: authentication
+and evaluation correctness, succinctness and security.
+
+\paragraph*{Authentication correctness} For any $m \in \calM$, all keys $(\ek,
+\sk) \gets_\$ \KeyGen(1^\lambda)$, any label $\tau \in \{0,1\}^\lambda$, and
+any tag $\sigma \gets_\$ \Auth_\sk(\tau, m)$, it holds:
+\begin{equation}\label{eq:hmac-auth-corr}
+  \Pr[\Vrfy_\sk(m, \calI_\tau, \sigma) = \mathsf{accept}]
+  = 1.
+\end{equation}
+
+\paragraph*{Evaluation correctness} For a pair $(\ek, \sk) \gets_\$
+\KeyGen(1^\lambda)$, a circuit $\function{g}{\calM^t}{\calM}$ and any set of
+triples $\{\left( m_i, \calP_i, \sigma_i \right)\}_{i = 1}^t$ such that
+$\Vrfy_\sk(m_i, \calP_i, \sigma_i) = \mathsf{accept}$. If $m^*
+= g(\mSpace{1}{t})$, $\calP^* = g(\setSpace{\calP}{1}{t})$, and $\sigma^*
+= \Eval_\ek(g, (\sigmaSpace{1}{t}))$, then it must hold:
+\begin{equation}\label{eq:hmac-eval-corr}
+  \Vrfy_\sk(m^*, \calP^*, \sigma^*) = \mathsf{accept}.
+\end{equation}
+
+\paragraph*{Succinctness} The size of a computed tag is bounded by some fixed
+polynomial in the security parameter $\poly(\lambda)$ which is independent of
+the number $n$ of inputs taken by the evaluated circuit.
+
+\paragraph*{Security} A homomorphic MAC scheme has to satisfy the following
+notion of unforgeability.
+\begin{definition}
+  A homomorphic MAC scheme $\HMAC = (\KeyGen, \Auth, \Vrfy, \Eval)$ is
+  \emph{unforgeable} if the advantage of any PPT adversary $\calA$ in the
+  following game is negligible in the security parameter $\lambda$.
+  \begin{description}
+    \item[Setup] The challenger generates $(\ek, \sk) \gets_\$
+      \KeyGen(1^\lambda)$ and gives the evaluation key \ek to $\calA$. It also
+      initializes a list $Q = \emptyset$.
+    \item[Authentication queries] The adversary can adaptively ask for tags on
+      label-message pairs of her choice. Given a query $(\tau, m)$, if there is
+      some $(\tau, m') \in Q$ for some $m' \neq m$, then the challenger ignores
+      the query.
+      %
+      Otherwise, it computes $\sigma \gets \Auth_\sk(\tau, m)$, returns
+      $\sigma$ to $\calA$ and updates the list $Q = Q \cup (\tau, m)$. If
+      $(\tau, m) \in Q$ (i.e., the query was previously made), then the
+      challenger returns the same tag generated before.
+    \item[Verification queries] The adversary has access to a verification
+      %oracle. $\calA$ can submit a query $(m, \calP, \sigma)$ and the
+      oracle. $\calA$ can submit a query $(\tuple{m, \calP, \sigma})$ and the
+      challenger replies with the output of $\Vrfy_\sk(m, \calP, \sigma)$.
+    \item[Forgery] Eventually, the adversary outputs a forgery $(m^*, \calP^*
+      = (f^*, \setSpace{\tau^*}{1}{n}), \sigma^*)$. Notice that such tuple can
+      also be returned by $\calA$ as a verification query $(m^*, \calP^*,
+      \sigma^*)$.
+  \end{description}
+  % Queries are not saved in Q because Auth is probabilistic
+  Before describing the output of this game, it is necessary to define the
+  notion of a well-defined program with respect to a list $Q$.
+  %
+  This notion intends to capture formally, which tuples generated by the
+  adversary $\calA$ should be considered as valid forgeries. Because we are
+  dealing with a homomorphic primitive, it should be possible to differentiate
+  genuine tags produced by \Eval from tags produced in another, possibly
+  malicious, way.
+  %
+  \paragraph*{Well-defined program} A labeled program $\calP^* = (f^*,
+  \setSpace{\tau^*}{1}{n})$ is \emph{well-defined with respect to $Q$} if
+  either one of the following conditions is met:
+  \begin{enumerate}
+    \item For some $i \in \{\interval{0}{n}\}$, there is a tuple $(\tau_i^*,
+      \cdot) \notin Q$ (i.e., $\calA$ never asked authentication queries with
+      label $\tau_i^*$), and $f^*(\{m_j\}_{(\tau_j, m_j) \in Q} \cup
+      \{\tilde{m}_j\}_{(\tau_j, \cdot) \notin Q})$ outputs the same value for
+      all possible values of $\tilde{m}_j \in \calM$. This means that the
+      inputs $\tilde{m}_j$ do not affect the behavior of $f^*$ \footnote{
+        Equivalently, it states that $f^*(\{m_j\}_{(\tau_j, m_j) \in Q}
+        \cup\{\tilde{m}_j\}_{(\tau_j, \cdot) \notin Q})$ is semantically
+        equivalent to $f^*(\{m_j\}_{(\tau_j, m_j) \in Q})$.}.
+
+    %\item For $i = \{0, \dotsc, n\}$, all tuples $(\tau_i^*, m_i)$ are in $Q$.
+    \item $Q$ contains tuples $(\tau_i^*, m_i)$ for some messages
+      $\mSpace{1}{n}$, i.e., the entire input space of $f^*$ has been
+      authenticated.
+  \end{enumerate}
+  The adversary $\calA$ wins if $\Vrfy_\sk(m^*, \calP^*, \sigma^*)
+  = \mathsf{accept}$ and either:
+  \begin{itemize}
+    \item \emph{Type I forgery:} $\calP^*$ is not well-defined on $Q$ or,
+    \item \emph{Type II forgery:} $\calP^*$ is well-defined on $Q$ and $m^*
+      \neq f^*(\{m_j\}_{(\tau_j, m_j) \in Q})$, which means that $m^*$ is not
+      the correct output of the labeled program $\calP^*$ when executed on
+      previously authenticated messages $(\mSpace{1}{n})$.
+  \end{itemize}
+\end{definition}
+
+%The aim of defining the notion of a well-defined program is to capture,
+%formally, which tuples generated by the adversary $\calA$ should be considered
+%as forgeries.
+%
+%But since we are dealing with a homomorphic primitive, we
+%should be able to differentiate genuine tags produced by \Eval from tags
+%produced in another, possibly malicious, way.
+Notice, however, that even maliciously generated tags should not necessarily be
+considered as forgeries.  This is because the adversary $\calA$ can trivially
+modify a circuit $C$ she is allowed to evaluate, by adding dummy gates and
+inputs that are simply ignored in the evaluation of the modified circuit. This
+does not constitute an infringement of the security requirements because the
+notion of a well-defined program $\calP$ captures this exact case: either
+$\calP$ is run on legal inputs (i.e., inputs in $Q$) only, or, if this is not
+the case, those inputs not queried (i.e., the dummy inputs not in $Q$) do not
+affect the computation in any way.
+
+The previous security definition is very similar to the one from fully
+homomorphic MACs of \textcite{gennaro:wichs:2012}, except for two
+modifications.  Here it is explicitly allowed to the adversary to query the
+verification oracle, and forgeries are slightly different.
+In~\cite{gennaro:wichs:2012}, Type I forgeries are defined as ones where at
+least one new label is present, and Type II forgeries contain only labels that
+have been queried, but $m^*$ is not the correct output of $\calP$ when executed
+over previously authenticated messages.
+
+For arbitrary computations, there is no efficient way to check whether
+a program is well-defined with respect to a list $Q$. The main problem is to
+check the first condition, i.e., whether a program always outputs the same
+value for all possible choices of inputs that were not queried. However, for
+the case of arithmetic circuits defined over the finite field $\bbZ_p$, where
+$p$ is a prime of roughly $\lambda$ bits, and whose degree is bounded by
+a polynomial, this check can be efficiently performed. In a follow-up work by
+\textcite{generalhmac}, it is noted that testing whether a program is
+well-defined can be done for arithmetic circuits of degree $d$, over a finite
+field $\bbF$ of order $p$ such that $\frac{d}{p} < \frac{1}{2}$.
+
+As one can observe from the authentication queries phase of the previous game,
+it is explicitly not allowed to re-use a label to authenticate more than one
+value. This is basically a way to keep track of the authenticated inputs. This
+is a restriction that has been present on all previous works on homomorphic
+authentication primitives.
+
+\textcite{backes:fiore:reischuk:2013} extended the notion of labeled programs
+in order to solve the problem of label re-use. Their notion of
+\emph{multi-labeled programs} allows the partial, but safe, re-use of labels.
+
+\paragraph*{Multi-labeled Programs} A \emph{multi-labeled program}
+$\calP_\Delta$ is a pair $(\calP, \Delta)$ where $\calP = f(\tauSpace{1}{n})$
+is a labeled-program and $\Delta \in \{0, 1\}^\lambda$ is a binary string
+denominated \emph{data set label}. Basically, the combination of a input label
+$\tau_i$ and a data set label $\Delta$, defined as a multi-label $\mathsf{L}
+= (\Delta, \tau_i)$, is used to uniquely identify a specific data item. In
+particular, binding a message $m_i$ with a multi-label $\mathsf{L}
+= (\Delta,\tau_i)$ means that $m_i$ can be assigned to those input variables
+with input label $\tau_i$.  The multi-label \textsf{L} uniquely identifies the
+message $m_i$. While the re-use of a multi-label \textsf{L} is not allowed, the
+re-use of a input label $\tau_i$ is allowed, instead.
+%
+Composition of multi-labeled programs within the same data set is possible.
+Given multi-labeled programs $(\calP_1, \Delta), \dotsc, (\calP_t, \Delta)$
+having the same data set label $\Delta$, and given a function
+$\function{g}{\calM^t}{\calM}$, the \emph{composed multi-labeled program}
+$\calP^*_\Delta$ is the pair $(\calP^*, \Delta)$ where $\calP^*$ is the
+composed program $g(\setSpace{\calP}{1}{t})$, and $\Delta$ is the data set
+label shared by all $\calP_i$. If $\function{f_{\id}}{\calM}{\calM}$ is the
+canonical identity function and $\mathsf{L} = (\Delta, \tau) \in (\{0,
+1\}^\lambda)^2$ is a multi-label, then $\calI_\mathsf{L} = (f_{\id},
+\mathsf{L})$ is the \emph{identity multi-labeled program} for data set $\Delta$
+and input label $\tau$. Like in labeled programs, any multi-labeled program
+$\calP_\Delta = ((f, \tauSpace{1}{n}), \Delta)$ can be expressed as the
+composition of $n$ identity multi-labeled programs $\calP_\Delta
+= (\setSpace{\calI}{\mathsf{L}_1}{\mathsf{L}_n})$ where $\mathsf{L}_i
+= (\Delta, \tau_i)$.
+
+Having defined the notion of a multi-labeled program, the definition of
+a homomorphic message authenticator from \refdef{def:hmac} can be adapted to
+support multi-labeled programs.
+
+\begin{definition}
+  A homomorphic message authenticator $\HMACML$ is a tuple of PPT algorithms
+  (\KeyGen, \Auth, \Vrfy, \Eval), where $\calM$ defines a message space, as
+  follows:
+  \begin{description}
+    \item[$\KeyGen(1^\lambda) \to (\ek, \sk)$:] Takes a security
+      parameter $\lambda$. Outputs a public evaluation key \ek and a secret key
+      \sk.
+    \item[$\Auth_\sk(\mathsf{L}, m) \to \sigma$:] Receives
+      a multi-label $\mathsf{L} = (\Delta, \tau) \in (\{0, 1\}^\lambda)^2$ and
+      a message $m \in \calM$, and outputs a tag $\sigma$.
+    \item[$\Vrfy_\sk(m, \calP_\Delta, \sigma) \to \{\mathsf{accept},
+      \mathsf{reject}\}$:] Receives a message $m \in \calM$, a multi-labeled program
+      $\calP_\Delta = ((f, \tauSpace{1}{n}), \Delta)$ and a tag $\sigma$, and
+      outputs either \textsf{accept} or \textsf{reject}.
+    \item[$\Eval_\ek(f, \vec{\sigma}) \to \sigma'$:] Receives a circuit
+      $\function{f}{\calM^n}{\calM}$ and a vector of tags $\vec{\sigma}
+      = (\sigmaSpace{1}{n})$, and outputs a new tag $\sigma'$.
+  \end{description}
+\end{definition}
+
+\paragraph*{Authentication correctness} For any message $m \in \calM$, all keys
+$(\ek, \sk) \gets_\$ \KeyGen(1^\lambda)$, any multi-label $\mathsf{L}
+= (\Delta, \tau) \in (\{0,1\}^\lambda)^2$, and any tag $\sigma' \gets_\$
+\Auth_\sk(\mathsf{L}, m)$, it holds:
+\begin{equation}\label{eq:hmac-ml-auth-corr}
+  \Pr[ \Vrfy_\sk(m, \calI_\mathsf{L}, \sigma') = \mathsf{accept}] = 1.
+\end{equation}
+
+\paragraph*{Evaluation correctness} For a pair $(\ek, \sk) \gets_\$
+\KeyGen(1^\lambda)$, a circuit $\function{g}{\calM^t}{\calM}$ and any set of
+triples $\{(m_i, \calP_{\Delta, i}, \sigma_i\}_{i=1}^t$ such that all
+multi-label programs $\calP_{\Delta, i} = (\calP_i, \Delta)$ and
+$\Vrfy_\sk(m_i, \calP_{\Delta,i}, \sigma_i) = \mathsf{accept}$. If $m^*
+= g(\mSpace{1}{t})$, $\calP^* = g(\setSpace{\calP}{1}{t})$, and $\sigma^*
+= \Eval_\ek(g, (\sigmaSpace{1}{t}))$, then it must hold:
+\begin{equation}\label{eq:hmac-ml-eval-corr}
+  \Pr[\Vrfy_\sk(m^*, \calP^*_\Delta, \sigma^*) = \mathsf{accept}] = 1.
+\end{equation}
+
+\paragraph*{Succinctness} The size of a computed tag is bounded by some fixed
+polynomial in the security parameter $\poly(\lambda)$ which is independent of
+the number $n$ of inputs taken by the evaluated circuit.
+
+\paragraph*{Security} The security property is extended from
+\textcite{catalano:fiore:2013} to the model of multi-labeled programs.
+A homomorphic MAC scheme has to satisfy the following notion of unforgeability.
+%
+\begin{definition}
+  A homomorphic MAC scheme $\HMAC = (\KeyGen, \Auth, \Vrfy, \Eval)$ is
+  \emph{unforgeable} if the advantage of any PPT adversary $\calA$ in the
+  following game is negligible in the security parameter $\lambda$.
+  \begin{description}
+    \item[Setup] The challenger generates $(\ek, \sk) \gets_\$
+      \KeyGen(1^\lambda)$ and gives the evaluation key to $\calA$.
+    \item[Authentication queries] The adversary can adaptively ask for tags on
+      multi-labels and messages of her choice. Given a query $(\mathsf{L}, m)$
+      where $\mathsf{L} = (\Delta, \tau)$, if this is the first query with data
+      set $\Delta$, the challenger initializes a list $Q_\Delta = \emptyset$.
+      Then, if $(\tau, m') \in T_\Delta$ for some $m' \neq m$, the challenger
+      ignores the query.  Otherwise, if $(\tau, \cdot) \notin Q_\Delta$, the
+      challenger computes $\sigma' \gets_\$ \Auth_\sk(\mathsf{L}, m)$,
+      returns $\sigma'$ to $\calA$ and updates list $Q_\Delta = Q_\Delta \cup
+      (\tau, m)$. If $(\tau, m) \in Q_\Delta$, then the challenger returns the
+      same tag generated before.
+    \item[Verification queries] The adversary has access to a verification
+      oracle. $\calA$ can submit a query $(\tuple{m, \calP_\Delta, \sigma})$, and the
+      challenger replies with the output of $\Vrfy_\sk(m, \calP_\Delta,
+      \sigma)$.
+    \item[Forgery] The game ends when $\calA$ returns a forgery $(m^*,
+      \calP^*_{\Delta^*} = (\calP^*, \Delta^*), \sigma^*)$ for some $\calP^*
+      = (f^*, \setSpace{\tau^*}{1}{n})$. Notice that such tuple can be returned
+      by $\calA$ as a verification query $(m^*, \calP^*_{\Delta^*}, \sigma^*)$.
+  \end{description}
+  %
+  Just as with labeled programs, it is necessary to define the notion of
+  well-defined programs with respect to a list $Q_\Delta$. The notion is
+  exactly the same as for labeled programs, except that now we are within
+  a data set $\Delta$.
+  
+  \noindent The adversary $\calA$ wins the game if $\Vrfy_\sk(m^*, \calP^*_{\Delta^*},
+  \sigma^*) = \mathsf{accept}$ and one of the following holds:
+  \begin{itemize}
+    \item \emph{Type I Forgery}: no list $Q_\Delta^*$ was created, i.e., no
+      message $m$ has been authenticated within data set label $\Delta^*$.
+    \item \emph{Type II Forgery}: $\calP^*$ is well-defined with respect to
+      $Q_{\Delta^*}$ and $m^* \neq f^*(\{m_j\}_{(\tau_j, m_j) \in Q_{\Delta^*}})$,
+      i.e., $m^*$ is not the correct output of labeled program $\calP^*$ when
+      executed on previously authenticated message $(\mSpace{1}{n})$.
+    \item \emph{Type III Forgery}: $\calP^*$ is not well-defined with respect
+      to $Q_{\Delta^*}$.
+  \end{itemize}
+\end{definition}
+
+This definition of security is similar to the one from
+\textcite{catalano:fiore:2013} previously presented, but extended to the model
+of multi-labeled programs.
+%
+Just as with labeled programs, it is not possible to check in polynomial time
+if whether an arbitrary computation is well-defined with respect to a list $Q$,
+but for the specific case of arithmetic circuits defined over the finite field
+$\bbZ_p$ and of polynomial degree, this check can be efficiently performed.
+% NOTE: it is possible to convert a type 3 into a type 2. This conversion is
+% what makes the checking of a well-defined program efficient, right?
+
+\paragraph*{Efficient Verification}The notion of multi-labels by itself does
+not guarantee an efficient verification algorithm. To achieve this it is
+necessary to introduce a property of efficient verification. This efficiency
+property is defined in an amortized sense, meaning that the verification is
+more efficient when the same program $\calP$ is executed on different data
+sets.
+%
+To achieve efficient verification, the definition of a homomorphic MAC scheme
+previously defined has to be augmented with two new algorithms.
+\begin{definition}
+  A homomorphic MAC scheme $\HMACML = (\KeyGen, \Auth, \Vrfy, \Eval)$ satisfies
+  \emph{efficient verification} if there exist two additional algorithms
+  (\VrfyPrep, \EffVrfy) as follows:
+  \begin{description}
+    \item[$\VrfyPrep_\sk(\calP) \to \vk_\calP$:] Given a labeled
+      program $\calP = (f, \tauSpace{1}{n})$, it generates a \emph{concise}
+      verification key $\vk_\calP$. This verification key does not depend on
+      any data set label $\Delta$.
+    \item[$\EffVrfy_{\sk, \vk_\calP}(\Delta, m, \sigma)$:] Given a data set
+      label $\Delta$, a message $m \in \calM$ and a tag $\sigma$, it outputs
+      either \textsf{accept} or \textsf{reject}.
+  \end{description}
+\end{definition}
+These new algorithms need to achieve two properties: correctness and amortized
+efficiency.
+
+\paragraph*{Correctness} Let $(\ek, \sk) \gets_\$ \KeyGen(1^\lambda)$ be a pair
+of honestly generated keys, and $(m, \calP_\Delta, \sigma)$ be any tuple
+message/program/tag with $\calP_\Delta = (\calP, \Delta)$ such that
+$\Vrfy_\sk(m, \calP_\Delta, \sigma) = \mathsf{accept}$. Then, for every
+$\vk_\calP \gets_\$ \VrfyPrep_\sk(\calP)$, it holds that:
+\begin{equation}\label{eq:eff-vrfy-corr}
+  \Pr[\EffVrfy_{\sk, \vk_\calP}(\Delta, m, \sigma) = \mathsf{accept}] = 1.
+\end{equation}
+
+\paragraph*{Amortized efficiency} Let $\calP_\Delta = (\calP, \Delta)$ be
+a multi-labeled program, let $(\mSpace{1}{n}) \in \calM^n$ be any vector of
+messages, and let $t(n)$ be the time required to compute
+$\calP(\mSpace{1}{n})$. If $\vk_\calP \gets \VrfyPrep_\sk(\calP)$, then the
+time required for $\EffVrfy_{\sk, \vk_\calP}(\Delta, m, \sigma)$ is $\calO(1)$
+(independent of $n$).
+
+In this efficiency requirement the cost of computing $\vk_\calP$ is not
+considered. That is because the same $\vk_\calP$ can be re-used in many
+verification operations with the same labeled program $\calP$, but many
+different data sets $\Delta$. Given this, the cost of computing $\vk_\calP$ is
+\emph{amortized} over many verifications of the same function on different data
+sets.
+
+\begin{comment}
+\subsection{Homomorphic Evaluation of Arithmetic Circuits} Here we
+follow~\cite{backes:fiore:reischuk:2013} to present some basic definitions
+regarding the homomorphic evaluation of arithmetic circuits over values defined
+in some appropriate set $\calJ \neq \calM$. Usually,
+$\function{f}{\bbZ_p^n}{\bbZ_p}$, but sometimes the message space may be
+defined in $\calJ$, and so it is necessary to obtain an equivalent algorithm
+that evaluates messages from $\calJ$ over $f$.
+
+\paragraph*{Homomorphic Evaluation over Polynomials} Consider that
+$\calJ_{\poly} = \bbZ_p[x_1, \dotsc, x_m]$ is the ring of polynomials in
+variables $x_1, \dotsc, x_m$ over $\bbZ_p$. For every tuple $\vec{a} = (a_1,
+\dotsc, a_m) \in \bbZ_p^m$, let
+$\function{\phi_{\vec{a}}}{\calJ_{\poly}}{\bbZ_p}$ be the function defined as
+$\phi_{\vec{a}}(y) = y(a_1, \dotsc, a_m)$ for any $y \in \calJ_{\poly}$.
+$\phi_{\vec{a}}$ is a homomorphism from $\calJ_{\poly}$ to $\bbZ_p$.
+%
+Given an arithmetic circuit $\function{f}{\bbZ_p^n}{\bbZ_p}$, there exists
+another structurally equivalent circuit
+$\function{\hat{f}}{\calJ_{\poly}^n}{\calJ_{\poly}}$ such that $\forall y_1,
+\dotsc, y_n \in \calJ_{\poly} \colon \phi_{\vec{a}}(\hat{f}(y_1, \dotsc, y_n))
+= f(\phi_{\vec{a}}(y_1), \dotsc, \phi_{\vec{a}}(y_n))$. The only difference is
+that in every gate the operation in $\bbZ_p$ is replaced by the corresponding
+operation in $\bbZ_p[x_1, \dotsc, x_m]$.
+
+More precisely, for every positive integer $m \in \bbN$ and a given $f$, the
+computation of $\hat{f}$ on $(y_1, \dotsc, y_n) \in \calJ^n_{\poly}$ can be
+defined as $\PolyEval(m, f, y_1, \dotsc, y_n) \to \bbZ_p$. For every gate
+$f_g$, on input two polynomials $y_1, y_2 \in \calJ_{\poly}$, proceeds as
+follows: if $f_g = +$, it outputs $y = y_1 + y_2$ (adds all coefficients
+component-wise); if $f_g = \times$, it outputs $y = y_1 \cdot y_2$ (uses the
+convolution operator on the coefficients). Notice that every $\times$ gate
+increases the degree $d$ of $y$, as well as its number of coefficients. If
+$y_1, y_2$ have degree $d_1, d_2$ respectively, the degree of $y = y_1 \cdot
+y_2$ is $d_1 + d_2$.
+
+\paragraph*{Bilinear Groups} Let $\calG(1^\lambda)$ be an algorithm that on
+input the security parameter $1^\lambda$, outputs the description of a bilinear
+group $\bgpp = (p, \bbG, \bbG_T, e, g)$ where $\bbG$ and $\bbG_T$ are groups of
+the same order $p > 2^\lambda$, $g \in \bbG$ is a generator and
+$\function{e}{\bbG \times \bbG}{\bbG_T}$ is an efficiently computable bilinear
+map, or pairing function. $\calG$ is a \emph{bilinear group generator}.
+
+\paragraph*{Homomorphic Evaluation over Bilinear Groups} Let $\bgpp = (p, \bbG,
+\bbG_T, e, g)$ be the description of a bilinear group as previously defined.
+With a fixed generator $g \in \bbG$, then $\bbG \cong (\bbZ_p, +)$ (i.e.,
+$\bbG$ and the additive group $(\bbZ_p, +)$ are isomorphic) by considering the
+isomorphism $\phi_g(x) = g^x$ for every $x \in \bbZ_p$. Similarly, by the
+property of the pairing function $e$, $\bbG_T \cong (\bbZ_p, +)$ by considering
+the isomorphism $\phi_{g_T}(x) = e(g,g)^x$. Since both $\phi_g$ and
+$\phi_{g_T}$ are isomorphisms, there also exist the corresponding inverses
+$\function{\phi_g^{-1}}{\bbG}{\bbZ_p}$ and
+$\function{\phi_{g_T}^{-1}}{\bbG_T}{\bbZ_p}$, even though these are not known
+to be efficiently computable.
+
+For every arithmetic circuit $\function{f}{\bbZ_p^n}{\bbZ_p}$ of degree at most
+2, the $\GroupEval(f, X_1, \dotsc, X_n)$ algorithm homomorphically evaluates
+$f$ with inputs in $\bbG$ and outputs in $\bbG_T$.
+
+Basically, given a circuit $f$ of degree at most 2, and given an $n$-tuple of
+values $(X_1, \dotsc, X_n) \in \bbG^n$, \GroupEval proceeds gate-by-gate as
+follows: if $f_g = +$, it uses the group operation in $\bbG$ or in $\bbG_T$; if
+$f_g = \times$, it uses the pairing function, thus ``lifting'' the result to
+the group $\bbG_T$. By using only circuits of degree at most 2, the
+multiplication is well defined.
+
+\GroupEval achieves the desired homomorphic property:
+\begin{theorem}\label{theo:group-eval-homo-prop}
+  Let $\bgpp = (p, \bbG, \bbG_T, e, g)$ be the description of bilinear groups.
+  Then, the algorithm $\GroupEval$ satisfies: $\forall(X_1, \dotsc, X_n) \in
+  \bbG^n \colon \GroupEval(f, X_1, \dotsc, X_n) = e(g,g)^{f(x_1, \dotsc, x_n)}$
+  for the unique values $\{x_i\}^n_{i=1} \in \bbZ_p$ such that $X_i = g^{x_i}$.
+\end{theorem}
+The proof of \reftheorem{theo:group-eval-homo-prop} can be found
+in~\cite{backes:fiore:reischuk:2013}.
+
+\subsection{Pseudo-Random Functions with Amortized Closed-Form Efficiency}
+A \emph{closed-form efficient} PRF is just like a standard PRF, plus an
+additional efficiency property. Consider a computation $\Comp(R_1, \dotsc, R_n,
+\vec{z})$ which takes random inputs $R$ and arbitrary inputs $\vec{z}$, and
+runs in time $t(n, |\vec{z}|)$. By considering the case where each $R_i
+= \mathsf{F}_K(\mathsf{L}_i)$, then the PRF \textsf{F} is said to satisfy
+closed-form efficiency for $(\Comp, \vec{\mathsf{L}})$ if, with the knowledge
+of the seed $K$, one can compute $\Comp(\mathsf{F}_K(\mathsf{L}_1), \dotsc,
+\mathsf{F}_K(\mathsf{L}_n), \vec{z})$ in time strictly less than $t$. The main
+idea is that in the pseudo-random case all $R_i$ values have a shorter
+closed-form representation (as a function of $K$), and this might also allow
+for the existence of a shorter closed-form representation of the computation
+\Comp.
+
+From the above considerations it possible to define a new property for PRFs:
+\emph{amortized close-form efficiency}. The idea is to address computations
+where each $R_i$ is generated as $\mathsf{F}_K(\Delta, \tau_i)$. All the inputs
+of \textsf{F} share the same data set label $\Delta$. Then, \textsf{F}
+satisfies amortized closed-form efficiency if it is possible to compute $\ell$
+computations $\{\Comp(\mathsf{F}_K(\Delta_j, \tau_1), \dotsc,
+\mathsf{F}_K(\Delta_j, \tau_n), \vec{z})\}^\ell_{j = 1}$ in time strictly less
+than $\ell \cdot t$.
+
+A PRF is defined as follows:
+\begin{description}
+  \item[$\KeyGen(1^\lambda) \to (\pp, K)$:] Given a security parameter,
+    output a secret key $K$ and some public parameters $\pp$ that specify
+    domain $\calX$ and range $\calR$ of the function.
+  \item[$\F_K(x) \to R$:] Receives $x \in \calX$ and uses the secret
+    key $K$ to compute a value $R \in \calR$.
+\end{description}
+A PRF must satisfy the pseudo-randomness property. More precisely, (\KeyGen, \F)
+is \emph{secure} if for every PPT adversary $\calA$ it holds:
+\begin{equation}\label{eq:amor-closed-form-prf-sec}
+  \abs*{\Pr[\calA^{\F_K(\cdot)}(1^\lambda, \pp) = 1]
+  - \Pr[\calA^{\phi(\cdot)}(1^\lambda, \pp) = 1]} \leq \negl(\lambda)
+\end{equation}
+$(K, \pp) \gets_\$ \KeyGen(1^\lambda)$, and
+$\function{\phi}{\calX}{\calR}$ is a random function.
+
+\begin{definition}\label{def:amort-closed-form-eff-prf}
+  Consider a computation $\Comp(R_1, \dotsc, R_n, z_1, \dotsc, z_m)$ with
+  random $n$ input values and $m$ arbitrary input values. \Comp takes time
+  $t(n,m)$. Let $\vec{\mathsf{L}} = (\mathsf{L}_1, \dotsc, \mathsf{L}_n)$ be
+  arbitrary values in the domain $\calX$ of \textsf{F} such that $\mathsf{L}_i
+  = (\Delta, \tau_i)$. A PRF (\KeyGen, \F) satisfies \emph{amortized
+  closed-form efficiency} for $(\Comp, \vec{\mathsf{L}})$ if there exist
+  algorithms $\CFEval^\off_{\Comp, \vec{\tau}}$ and $\CFEval^\on_{\Comp,
+  \Delta}$ such that:
+  \begin{enumerate}
+    \item Given $\omega \gets \CFEval^\off_{\Comp, \vec{\tau}}(K,
+      \vec{z})$, then
+      \begin{equation}\label{eq:prf-acf-eff-1}
+        \CFEval^\on_{\Comp, \Delta}(K, \omega) = \Comp(\F_K(\Delta, \tau_1),
+        \dotsc, \F_K(\Delta, \tau_n), z_1, \dotsc, z_m)
+      \end{equation}
+    \item The running time of $\CFEval^\on_{\Comp, \Delta}(K, \omega)$ is
+      $o(t)$.
+  \end{enumerate}
+\end{definition}
+The $\omega$ obtained from the offline computation $\CFEval^\off_{\Comp, \tau}$
+does not depend on data set label $\Delta$, which means that it can be re-used
+in further online computations $\CFEval^\on_{\Comp, \Delta}(K, \omega)$ to
+compute $\Comp(\F_K(\Delta, \tau_1), \dotsc, \F_K(\Delta, \tau_n), \vec{z})$
+for many different $\Delta$'s.
+%
+Because of this, the efficiency property puts a restriction only on
+$\CFEval^\on_{\Comp,\Delta}$ in order to capture the idea of achieving
+efficiency in an amortized sense when considering many evaluations over of
+$\Comp(\F_K(\Delta, \tau_1), \dotsc, \F_K(\Delta, \tau_n), \dotsc, \vec{z})$,
+with different data set label $\Delta$ in each evaluation. Essentially, one can
+pre-compute $\omega$ once, and then use it to run the online phase as many
+times as needed, almost for free.
+
+The structure of \Comp may impose some restrictions on the range $\calR$ of the
+PRF, and due to the pseudo-randomness property, the output distribution of
+$\CFEval^\on_{\Comp, \Delta}(K, \CFEval^\off_{\Comp, \vec{\tau}}(K, \vec{z}))$
+is computationally indistinguishable from the output distribution of
+$\Comp(R_1, \dotsc, R_n, \vec{z})$.
+\end{comment}
+
+\input{Chapters/_homo-macs-cf}
+
+\input{Chapters/_homo-macs-bfr}

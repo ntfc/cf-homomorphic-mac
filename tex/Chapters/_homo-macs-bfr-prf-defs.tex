@@ -1,0 +1,165 @@
+%\chapter{Definitions of \citescheme{backes:fiore:reischuk:2013}}\label{app:bfr-defs}
+
+%In this appendix we provide some theoretical definitions necessary to build the
+%\textcite{backes:fiore:reischuk:2013} scheme presented in
+%\refsec{sec:bfr-scheme}. We define how homomorphic evaluation is performed
+%and what a PRF with Amortized Closed-Form Efficiency is.
+
+Before presenting the actual construction, we introduce some definitions and
+utilities necessary to build a PRF with efficient (amortized) verification.
+%
+%\paragraph*{Homomorphic Evaluation of Arithmetic Circuits}
+We start by presenting some basic
+%Here we follow~\cite{backes:fiore:reischuk:2013} to present some basic
+definitions regarding the homomorphic evaluation of arithmetic circuits over
+values defined in some appropriate set $\calJ \neq \calM$. Usually,
+$\function{f}{\bbZ_p^n}{\bbZ_p}$, but sometimes the message space may be
+defined in $\calJ$, and so it is necessary to obtain an equivalent algorithm
+that evaluates messages from $\calJ$ over $f$.
+
+\paragraph*{Homomorphic Evaluation over Polynomials} Consider that
+$\calJ_{\poly} = \bbZ_p[x_1, \dotsc, x_m]$ is the ring of polynomials in
+variables $x_1, \dotsc, x_m$ over $\bbZ_p$. For every tuple $\vec{a} = (a_1,
+\dotsc, a_m) \in \bbZ_p^m$, let
+$\function{\phi_{\vec{a}}}{\calJ_{\poly}}{\bbZ_p}$ be the function defined as
+$\phi_{\vec{a}}(y) = y(a_1, \dotsc, a_m)$ for any $y \in \calJ_{\poly}$.
+$\phi_{\vec{a}}$ is a homomorphism from $\calJ_{\poly}$ to $\bbZ_p$.
+%
+Given an arithmetic circuit $\function{f}{\bbZ_p^n}{\bbZ_p}$, there exists
+another structurally equivalent circuit
+$\function{\hat{f}}{\calJ_{\poly}^n}{\calJ_{\poly}}$ such that $\forall y_1,
+\dotsc, y_n \in \calJ_{\poly} \colon \phi_{\vec{a}}(\hat{f}(y_1, \dotsc, y_n))
+= f(\phi_{\vec{a}}(y_1), \dotsc, \phi_{\vec{a}}(y_n))$. The only difference is
+that in every gate the operation in $\bbZ_p$ is replaced by the corresponding
+operation in $\bbZ_p[x_1, \dotsc, x_m]$.
+
+More precisely, for every positive integer $m \in \bbN$ and a given $f$, the
+computation of $\hat{f}$ on $(y_1, \dotsc, y_n) \in \calJ^n_{\poly}$ can be
+defined as $\PolyEval(m, f, y_1, \dotsc, y_n) \to \bbZ_p$. For every gate
+$f_g$, on input two polynomials $y_1, y_2 \in \calJ_{\poly}$, proceeds as
+follows: if $f_g = +$, it outputs $y = y_1 + y_2$ (adds all coefficients
+component-wise); if $f_g = \times$, it outputs $y = y_1 \cdot y_2$ (uses the
+convolution operator on the coefficients). Notice that every $\times$ gate
+increases the degree $d$ of $y$, as well as its number of coefficients. If
+$y_1, y_2$ have degree $d_1, d_2$ respectively, the degree of $y = y_1 \cdot
+y_2$ is $d_1 + d_2$.
+
+\paragraph*{Bilinear Groups} Let $\calG(1^\lambda)$ be an algorithm that on
+input the security parameter $1^\lambda$, outputs the description of a bilinear
+group $\bgpp = (p, \bbG, \bbG_T, e, g)$ where $\bbG$ and $\bbG_T$ are groups of
+the same order $p > 2^\lambda$, $g \in \bbG$ is a generator and
+$\function{e}{\bbG \times \bbG}{\bbG_T}$ is an efficiently computable bilinear
+map, or pairing function. $\calG$ is a \emph{bilinear group generator}.
+
+\paragraph*{Homomorphic Evaluation over Bilinear Groups} Let $\bgpp = (p, \bbG,
+\bbG_T, e, g)$ be the description of a bilinear group as previously defined.
+With a fixed generator $g \in \bbG$, then $\bbG \cong (\bbZ_p, +)$ (i.e.,
+$\bbG$ and the additive group $(\bbZ_p, +)$ are isomorphic) by considering the
+isomorphism $\phi_g(x) = g^x$ for every $x \in \bbZ_p$. Similarly, by the
+property of the pairing function $e$, $\bbG_T \cong (\bbZ_p, +)$ by considering
+the isomorphism $\phi_{g_T}(x) = e(g,g)^x$. Since both $\phi_g$ and
+$\phi_{g_T}$ are isomorphisms, there also exist the corresponding inverses
+$\function{\phi_g^{-1}}{\bbG}{\bbZ_p}$ and
+$\function{\phi_{g_T}^{-1}}{\bbG_T}{\bbZ_p}$, even though these are not known
+to be efficiently computable.
+
+For every arithmetic circuit $\function{f}{\bbZ_p^n}{\bbZ_p}$ of degree at most
+2, the $\GroupEval(f, X_1, \dotsc, X_n)$ algorithm homomorphically evaluates
+$f$ with inputs in $\bbG$ and outputs in $\bbG_T$.
+
+Basically, given a circuit $f$ of degree at most 2, and given an $n$-tuple of
+values $(X_1, \dotsc, X_n) \in \bbG^n$, \GroupEval proceeds gate-by-gate as
+follows: if $f_g = +$, it uses the group operation in $\bbG$ or in $\bbG_T$; if
+$f_g = \times$, it uses the pairing function, thus ``lifting'' the result to
+the group $\bbG_T$. By using only circuits of degree at most 2, the
+multiplication is well defined.
+
+\GroupEval achieves the desired homomorphic property:
+\begin{theorem}\label{theo:group-eval-homo-prop}
+  Let $\bgpp = (p, \bbG, \bbG_T, e, g)$ be the description of bilinear groups.
+  Then, the algorithm $\GroupEval$ satisfies: $\forall(X_1, \dotsc, X_n) \in
+  \bbG^n \colon \GroupEval(f, X_1, \dotsc, X_n) = e(g,g)^{f(x_1, \dotsc, x_n)}$
+  for the unique values $\{x_i\}^n_{i=1} \in \bbZ_p$ such that $X_i = g^{x_i}$.
+\end{theorem}
+The proof of \reftheorem{theo:group-eval-homo-prop} can be found
+in~\cite{backes:fiore:reischuk:2013}.
+
+\paragraph*{PRFs with Amortized Closed-Form Efficiency}
+A \emph{closed-form efficient} PRF is just like a standard PRF, plus an
+additional efficiency property. Consider a computation $\Comp(R_1, \dotsc, R_n,
+\vec{z})$ which takes random inputs $R$ and arbitrary inputs $\vec{z}$, and
+runs in time $t(n, |\vec{z}|)$. By considering the case where each $R_i
+= \mathsf{F}_K(\mathsf{L}_i)$, then the PRF \textsf{F} is said to satisfy
+closed-form efficiency for $(\Comp, \vec{\mathsf{L}})$ if, with the knowledge
+of the seed $K$, one can compute $\Comp(\mathsf{F}_K(\mathsf{L}_1), \dotsc,
+\mathsf{F}_K(\mathsf{L}_n), \vec{z})$ in time strictly less than $t$. The main
+idea is that in the pseudo-random case all $R_i$ values have a shorter
+closed-form representation (as a function of $K$), and this might also allow
+for the existence of a shorter closed-form representation of the computation
+\Comp.
+
+From the above considerations it possible to define a new property for PRFs:
+\emph{amortized close-form efficiency}. The idea is to address computations
+where each $R_i$ is generated as $\mathsf{F}_K(\Delta, \tau_i)$. All the inputs
+of \textsf{F} share the same data set label $\Delta$. Then, \textsf{F}
+satisfies amortized closed-form efficiency if it is possible to compute $\ell$
+computations $\{\Comp(\mathsf{F}_K(\Delta_j, \tau_1), \dotsc,
+\mathsf{F}_K(\Delta_j, \tau_n), \vec{z})\}^\ell_{j = 1}$ in time strictly less
+than $\ell \cdot t$.
+
+A PRF is defined as follows:
+\begin{description}
+  \item[$\KeyGen(1^\lambda) \to (\pp, K)$:] Given a security parameter,
+    output a secret key $K$ and some public parameters $\pp$ that specify
+    domain $\calX$ and range $\calR$ of the function.
+  \item[$\F_K(x) \to R$:] Receives $x \in \calX$ and uses the secret
+    key $K$ to compute a value $R \in \calR$.
+\end{description}
+A PRF must satisfy the pseudo-randomness property. More precisely, (\KeyGen, \F)
+is \emph{secure} if for every PPT adversary $\calA$ it holds:
+\begin{equation}\label{eq:amor-closed-form-prf-sec}
+  \abs*{\Pr[\calA^{\F_K(\cdot)}(1^\lambda, \pp) = 1]
+  - \Pr[\calA^{\phi(\cdot)}(1^\lambda, \pp) = 1]} \leq \negl(\lambda)
+\end{equation}
+$(K, \pp) \gets_\$ \KeyGen(1^\lambda)$, and
+$\function{\phi}{\calX}{\calR}$ is a random function.
+
+\begin{definition}\label{def:amort-closed-form-eff-prf}
+  Consider a computation $\Comp(R_1, \dotsc, R_n, z_1, \dotsc, z_m)$ with
+  random $n$ input values and $m$ arbitrary input values. \Comp takes time
+  $t(n,m)$. Let $\vec{\mathsf{L}} = (\mathsf{L}_1, \dotsc, \mathsf{L}_n)$ be
+  arbitrary values in the domain $\calX$ of \textsf{F} such that $\mathsf{L}_i
+  = (\Delta, \tau_i)$. A PRF (\KeyGen, \F) satisfies \emph{amortized
+  closed-form efficiency} for $(\Comp, \vec{\mathsf{L}})$ if there exist
+  algorithms $\CFEval^\off_{\Comp, \vec{\tau}}$ and $\CFEval^\on_{\Comp,
+  \Delta}$ such that:
+  \begin{enumerate}
+    \item Given $\omega \gets \CFEval^\off_{\Comp, \vec{\tau}}(K,
+      \vec{z})$, then
+      \begin{equation}\label{eq:prf-acf-eff-1}
+        \CFEval^\on_{\Comp, \Delta}(K, \omega) = \Comp(\F_K(\Delta, \tau_1),
+        \dotsc, \F_K(\Delta, \tau_n), z_1, \dotsc, z_m)
+      \end{equation}
+    \item The running time of $\CFEval^\on_{\Comp, \Delta}(K, \omega)$ is
+      $o(t)$.
+  \end{enumerate}
+\end{definition}
+The $\omega$ obtained from the offline computation $\CFEval^\off_{\Comp, \tau}$
+does not depend on data set label $\Delta$, which means that it can be re-used
+in further online computations $\CFEval^\on_{\Comp, \Delta}(K, \omega)$ to
+compute $\Comp(\F_K(\Delta, \tau_1), \dotsc, \F_K(\Delta, \tau_n), \vec{z})$
+for many different $\Delta$'s.
+%
+Because of this, the efficiency property puts a restriction only on
+$\CFEval^\on_{\Comp,\Delta}$ in order to capture the idea of achieving
+efficiency in an amortized sense when considering many evaluations over of
+$\Comp(\F_K(\Delta, \tau_1), \dotsc, \F_K(\Delta, \tau_n), \dotsc, \vec{z})$,
+with different data set label $\Delta$ in each evaluation. Essentially, one can
+pre-compute $\omega$ once, and then use it to run the online phase as many
+times as needed, almost for free.
+
+The structure of \Comp may impose some restrictions on the range $\calR$ of the
+PRF, and due to the pseudo-randomness property, the output distribution of
+$\CFEval^\on_{\Comp, \Delta}(K, \CFEval^\off_{\Comp, \vec{\tau}}(K, \vec{z}))$
+is computationally indistinguishable from the output distribution of
+$\Comp(R_1, \dotsc, R_n, \vec{z})$.

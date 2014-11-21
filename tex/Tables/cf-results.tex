@@ -1,0 +1,48 @@
+\begin{table}[htb]\small
+\centering
+{\renewcommand{\arraystretch}{0.93} %<- modify value to suit your needs
+\begin{tabular}{|r|r|rrrr|r|r|}
+\hline
+                                           &           & \multicolumn{1}{r}{\KeyGen}& \Auth                    & \Eval                   & \Vrfy      & Circuit                   & Tag Size  \\ 
+$n$                                        & $\lambda$ & \multicolumn{1}{r}{(ms)}   & \multicolumn{1}{r}{(ms)} & \multicolumn{1}{r}{(s)} & (ms)       & \multicolumn{1}{r|}{(ms)} & (kB)      \\ \hline
+% n = 10
+%\multicolumn{1}{|r|}{\multirow{2}{*}{10}}  & 128       & 0.37                       & 0.42                     & 40.4e-4                 & 0.64       & 0.50                      & 0.77      \\
+%\multicolumn{1}{|r|}{}                     & 256       & 1.23                       & 0.63                     & 66e-4                   & 0.62       & 0.58                      & 1.5       \\ \hline
+\multicolumn{1}{|r|}{\multirow{2}{*}{10}}  & 128       & 0.37                       & 0.42                     & 0.004                   & 0.64       & 0.50                      & 0.19     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.23                       & 0.63                     & 0.007                   & 0.62       & 0.58                      & 0.38     \\ \hline
+% n = 20
+%\multicolumn{1}{|r|}{\multirow{2}{*}{20}}  & 128       & 0.41                       & 0.60                     & 24.2e-3                 & 0.38       & 0.41                      & 1.4       \\
+%\multicolumn{1}{|r|}{}                     & 256       & 1.20                       & 0.47                     & 39e-3                   & 0.46       & 0.37                      & 2.8       \\ \hline
+\multicolumn{1}{|r|}{\multirow{2}{*}{20}}  & 128       & 0.41                       & 0.60                     & 0.024                   & 0.38       & 0.41                      & 0.35     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.20                       & 0.47                     & 0.039                   & 0.46       & 0.37                      & 0.70     \\ \hline
+% n = 50
+%\multicolumn{1}{|r|}{\multirow{2}{*}{50}}  & 128       & 0.39                       & 0.44                     & 30.1e-2                 & 1.17       & 1.06                      & 3.3       \\
+\multicolumn{1}{|r|}{\multirow{2}{*}{50}}  & 128       & 0.39                       & 0.44                     & 0.31                    & 1.17       & 1.06                      & 0.83     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.14                       & 0.44                     & 0.47                    & 1.66       & 1.51                      & 1.66     \\ \hline
+% n = 100
+\multicolumn{1}{|r|}{\multirow{2}{*}{100}} & 128       & 0.37                       & 0.60                     & 2.57                    & 6.32       & 5.57                      & 1.63     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.16                       & 0.79                     & 4.01                    & 8.61       & 7.44                      & 3.26     \\ \hline
+% n = 125
+\multicolumn{1}{|r|}{\multirow{2}{*}{125}} & 128       & 0.35                       & 0.61                     & 3.79                    & 7.79       & 6.91                      & 2.03     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.07                       & 0.88                     & 5.87                    & 10.26      & 8.94                      & 4.06     \\ \hline
+% n = 150
+\multicolumn{1}{|r|}{\multirow{2}{*}{150}} & 128       & 0.48                       & 0.71                     & 6.94                    & 11.63      & 10.31                     & 2.43     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.40                       & 0.98                     & 10.46                   & 15.48      & 13.79                     & 4.86     \\ \hline
+% n = 200
+\multicolumn{1}{|r|}{\multirow{2}{*}{200}} & 128       & 0.38                       & 0.88                     & 17.00                   & 23.76      & 22.50                     & 3.23     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.22                       & 1.32                     & 26.40                   & 30.87      & 29.08                     & 6.49     \\ \hline
+% n = 300
+\multicolumn{1}{|r|}{\multirow{2}{*}{300}} & 128       & 0.34                       & 1.20                     & 51.77                   & 50.69      & 49.53                     & 4.83     \\
+\multicolumn{1}{|r|}{}                     & 256       & 1.21                       & 1.83                     & 79.40                   & 64.07      & 62.94                     & 9.66     \\ \hline
+\end{tabular}
+}
+\captionof{table}[CF1 performance]{CF1 Performance. All circuits representing
+  polynomials of degree $n$ are generated as mentioned before. The security
+  parameter $\lambda$ is either 128 or 256 bits. The Circuit column refers to
+  a circuit evaluation (as demonstrated in \refsec{sec:circeval}) where the
+  inputs are the original messages used in \Auth. The Tag Size refers only to
+  \citescheme{catalano:fiore:2013}1, since that for
+  \citescheme{catalano:fiore:2013}2 the tag size is a group element of either
+16 or 32 bytes for $\lambda$ of 128 or 256 bits,
+respectively.}\label{tab:cf-perf}
+\end{table}
