@@ -11,7 +11,7 @@ These primitives can also handle general computations and almost as efficiently
 as Turing machines. More precisely, if there is a Turing machine program that
 evaluates a function $f$ in at most $n$ steps, then there is a circuit
 representing $f$ with size $\calO(n \log n)$ \cite{Pippenger:1979:RCM}. Of
-course that these values depend on the application we are computing. For
+course these values depend on the application we are computing. For
 example, an arithmetic circuit for matrix multiplication adds essentially no
 overhead, whereas a boolean circuit for integer multiplication is less
 efficient than executing a single 32-bit machine assembly instruction.
@@ -336,7 +336,7 @@ proved to be much slower, specially on their setting of verifiable computation.
 The compiler, written in Python, can process a substantial subset of
 \texttt{C}: global, function and block-scoped variables; arrays, struct's and
 pointers; function calls, conditional loops; static initializers; arithmetic
-and bit-wise operators; and pre-processor directives. The piece code that we
+and bit-wise operators; and pre-processor directives. The piece of code that we
 wish to convert to a circuit must be inside the function \texttt{void
 outsource(struct Input *, struct Output *)}. The parameters describe the input
 and output values, respectively.

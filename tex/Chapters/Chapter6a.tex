@@ -96,7 +96,7 @@ obviously efficient).
 %His technique works by encoding the coefficients as a single large integer,
 %then use the integer multiplication GMP or NTL (for such large integers, FFT
 %multiplication is used), and then decodes them using a suitable technique.
-\citeauthor{Fateman:2010} also noticed that by using NTL for FFT multiplication
+\citeauthor{Fateman:2010} also noticed that using NTL for FFT multiplication
 can be more efficient if NTL is compiled with GMP support\footnotemark.
 \footnotetext{NTL's author also advises to compile NTL with GMP support for
 better results}
@@ -187,7 +187,7 @@ Because \Vrfy runs in time proportional to a circuit evaluation, we know that
 execution times will be similar, with only (small) overhead of \Vrfy because of
 the algebraic operations it performs over the ``polynomial tag''.
 
-We tested both set of polynomials with \citescheme{catalano:fiore:2013}1 and
+We tested both sets of polynomials with \citescheme{catalano:fiore:2013}1 and
 \citescheme{catalano:fiore:2013}2, but the only difference between the two is
 that the latter has a slower \KeyGen (because of the necessary $D$
 exponentiations) and creates succinct tags of constant size (they are simply
@@ -241,7 +241,7 @@ responsible for the algebraic computations.
 Regarding the results of \citetool{parno:howell:gentry:raykova:2013}'s
 polynomials in \reftable{tab:cf-perf-pinocchio}, their circuit evaluation
 consists of a much larger number of gate multiplications than our randomly
-generated polynomials. Because of that, their circuit evaluation takes more
+generated polynomials. Because of this, their circuit evaluation takes more
 time which makes both the homomorphic evaluation \Eval and \Vrfy
 slower.
 %\todo[inline,size=\small]{nao sei se estou a explicar bem que eu quero dizer

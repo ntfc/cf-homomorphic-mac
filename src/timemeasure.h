@@ -6,6 +6,7 @@ extern "C" {
 
 #ifdef USE_TIME_MEASURE
   #include <time.h>
+  #include <stdio.h>
   #include <sys/resource.h>
   #include "types.h"
 
